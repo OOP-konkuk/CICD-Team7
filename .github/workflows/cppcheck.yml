@@ -1,0 +1,39 @@
+name: Cppcheck Static Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
+
+      - name: Run Cppcheck
+        run: |
+          cppcheck --enable=all --inconclusive --quiet --force --std=c++17 \
+            --suppress=missingIncludeSystem \
+            --output-file=cppcheck-report.txt \
+            ./src || true
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cppcheck-report
+          path: cppcheck-report.txt
+
+      - name: Discord 알림
+        if: always()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: '🔍 Cppcheck 분석 완료: `${{ github.repository }}` - ${{ github.ref_name }}'
