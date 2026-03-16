@@ -55,6 +55,7 @@ jobs:
           wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
           unzip sonar-scanner-cli-5.0.1.3006-linux.zip
           ./sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
+            -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.projectKey=OOP-konkuk_CICD-Team7 \
             -Dsonar.organization=oop-konkuk \
             -Dsonar.sources=src \
