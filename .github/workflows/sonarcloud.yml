@@ -10,9 +10,6 @@ jobs:
   sonarcloud:
     runs-on: ubuntu-latest
 
-    env:
-      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,39 +19,50 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake gcc g++ lcov
-          sudo apt-get install -y gcc-multilib g++-multilib
+          sudo apt-get install -y build-essential cmake lcov unzip wget
+          pip install gcovr==6.0
 
-      - name: Install Build Wrapper
-        run: |
-          curl -sSLo build-wrapper-linux-x86.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
-          unzip build-wrapper-linux-x86.zip
-          sudo mv build-wrapper-linux-x86/build-wrapper-linux-x86-64 /usr/local/bin/
+      - name: Extract build-wrapper
+        run: unzip tools/build-wrapper-linux-x86.zip
 
-      - name: Configure & Build with wrapper
+      - name: Configure CMake
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage"
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build build
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage" \
+            -DCMAKE_C_FLAGS="--coverage"
+
+      - name: Build with build-wrapper
+        run: |
+          ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output \
+            cmake --build build
 
       - name: Run Tests
         run: cd build && ctest --output-on-failure
 
-      - name: Capture coverage
+      - name: Generate coverage report
         run: |
-          lcov --directory build --capture --output-file coverage.info --ignore-errors mismatch,empty
-          lcov --remove coverage.info '/usr/*' '*/test/*' --output-file coverage.info
+          gcovr -r . \
+            --sonarqube \
+            --object-directory build \
+            --exclude ".*CMakeFiles.*" \
+            --exclude-unreachable-branches \
+            --gcov-ignore-errors=no_working_dir_found \
+            -o coverage.xml
 
-      - name: Analyze on SonarCloud
+      - name: Run SonarScanner
         run: |
-          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-          unzip sonar-scanner.zip
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip sonar-scanner-cli-5.0.1.3006-linux.zip
           ./sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
             -Dsonar.projectKey=OOP-konkuk_CICD-Team7 \
             -Dsonar.organization=oop-konkuk \
-            -Dsonar.cfamily.build-wrapper-output=${{ env.BUILD_WRAPPER_OUT_DIR }} \
-            -Dsonar.cfamily.gcov.reportsPath=build
+            -Dsonar.sources=src \
+            -Dsonar.cfamily.build-wrapper-output=bw-output \
+            -Dsonar.coverageReportPaths=coverage.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Discord 성공 알림
         if: success()
