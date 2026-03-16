@@ -15,9 +15,9 @@ FetchContent_Declare(
         DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
 FetchContent_MakeAvailable(googletest)
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 # 테스트 설정
 enable_testing()
