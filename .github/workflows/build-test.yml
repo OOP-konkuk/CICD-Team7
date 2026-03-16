@@ -2,9 +2,9 @@ name: Build & Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ develop ]
 
 jobs:
   build-test:
@@ -24,15 +24,13 @@ jobs:
         run: cmake --build build
 
       - name: Run Google Test
-        run: |
-          cd build
-          ctest --output-on-failure
+        run: cd build && ctest --output-on-failure
 
       - name: Capture coverage
         run: |
           lcov --directory build --capture --output-file coverage.info --ignore-errors mismatch,empty
           lcov --remove coverage.info '/usr/*' '*/test/*' --output-file coverage.info
-          
+
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5
         with:
