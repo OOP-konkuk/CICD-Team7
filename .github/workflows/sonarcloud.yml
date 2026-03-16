@@ -23,7 +23,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y cmake gcc g++ lcov
 
       - name: Install Build Wrapper
-        uses: SonarSource/sonarcloud-github-c-cpp@v2
+        uses: SonarSource/sonarqube-github-c-cpp@v1
 
       - name: Configure & Build with wrapper
         run: |
