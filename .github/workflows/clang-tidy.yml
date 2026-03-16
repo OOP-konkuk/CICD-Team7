@@ -26,6 +26,17 @@ jobs:
             -p build \
             -- -std=c++17 > clang-tidy-report.txt 2>&1 || true
 
+      - name: Count issues
+        id: count_issues
+        run: |
+          WARNINGS=$(grep -c "warning:" clang-tidy-report.txt 2>/dev/null || true)
+          ERRORS=$(grep -c "error:" clang-tidy-report.txt 2>/dev/null || true)
+          TOTAL=$(wc -l < clang-tidy-report.txt 2>/dev/null || true)
+
+          echo "WARNINGS=${WARNINGS:-0}" >> $GITHUB_OUTPUT
+          echo "ERRORS=${ERRORS:-0}" >> $GITHUB_OUTPUT
+          echo "TOTAL=${TOTAL:-0}" >> $GITHUB_OUTPUT
+
       - name: Upload report
         uses: actions/upload-artifact@v4
         with:
@@ -38,4 +49,8 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: '🔍 Clang-Tidy 분석 완료: `${{ github.repository }}` - ${{ github.ref_name }}'
+          args: |
+            🔍 **Clang-Tidy 분석 결과**: `${{ github.repository }}` - ${{ github.ref_name }}
+            • Errors: ${{ steps.count_issues.outputs.ERRORS }}
+            • Warnings: ${{ steps.count_issues.outputs.WARNINGS }}
+            • Total: ${{ steps.count_issues.outputs.TOTAL }}

@@ -59,7 +59,7 @@ jobs:
             -Dsonar.projectKey=OOP-konkuk_CICD-Team7 \
             -Dsonar.organization=oop-konkuk \
             -Dsonar.sources=src \
-            -Dsonar.cfamily.build-wrapper-output=bw-output \
+            -Dsonar.cfamily.compile-commands=bw-output/compile_commands.json \
             -Dsonar.coverageReportPaths=coverage.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
