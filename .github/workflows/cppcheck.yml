@@ -29,17 +29,17 @@ jobs:
       - name: Count issues by severity
         id: count_issues
         run: |
-          ERRORS=$(grep -c "error:" cppcheck-report.txt || echo 0)
-          WARNINGS=$(grep -c "warning:" cppcheck-report.txt || echo 0)
-          STYLE=$(grep -c "style:" cppcheck-report.txt || echo 0)
-          PERFORMANCE=$(grep -c "performance:" cppcheck-report.txt || echo 0)
-          TOTAL=$(wc -l < cppcheck-report.txt || echo 0)
+          ERRORS=$(grep -c "error:" cppcheck-report.txt 2>/dev/null || true)
+          WARNINGS=$(grep -c "warning:" cppcheck-report.txt 2>/dev/null || true)
+          STYLE=$(grep -c "style:" cppcheck-report.txt 2>/dev/null || true)
+          PERFORMANCE=$(grep -c "performance:" cppcheck-report.txt 2>/dev/null || true)
+          TOTAL=$(wc -l < cppcheck-report.txt 2>/dev/null || true)
 
-          echo "ERRORS=$ERRORS" >> $GITHUB_OUTPUT
-          echo "WARNINGS=$WARNINGS" >> $GITHUB_OUTPUT
-          echo "STYLE=$STYLE" >> $GITHUB_OUTPUT
-          echo "PERFORMANCE=$PERFORMANCE" >> $GITHUB_OUTPUT
-          echo "TOTAL=$TOTAL" >> $GITHUB_OUTPUT
+          echo "ERRORS=${ERRORS:-0}" >> $GITHUB_OUTPUT
+          echo "WARNINGS=${WARNINGS:-0}" >> $GITHUB_OUTPUT
+          echo "STYLE=${STYLE:-0}" >> $GITHUB_OUTPUT
+          echo "PERFORMANCE=${PERFORMANCE:-0}" >> $GITHUB_OUTPUT
+          echo "TOTAL=${TOTAL:-0}" >> $GITHUB_OUTPUT
 
       - name: Upload report
         uses: actions/upload-artifact@v4

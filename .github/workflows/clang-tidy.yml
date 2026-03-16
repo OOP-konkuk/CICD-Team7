@@ -29,13 +29,13 @@ jobs:
       - name: Count issues
         id: count_issues
         run: |
-          WARNINGS=$(grep -c "warning:" clang-tidy-report.txt || echo 0)
-          ERRORS=$(grep -c "error:" clang-tidy-report.txt || echo 0)
-          TOTAL=$(wc -l < clang-tidy-report.txt || echo 0)
+          WARNINGS=$(grep -c "warning:" clang-tidy-report.txt 2>/dev/null || true)
+          ERRORS=$(grep -c "error:" clang-tidy-report.txt 2>/dev/null || true)
+          TOTAL=$(wc -l < clang-tidy-report.txt 2>/dev/null || true)
 
-          echo "WARNINGS=$WARNINGS" >> $GITHUB_OUTPUT
-          echo "ERRORS=$ERRORS" >> $GITHUB_OUTPUT
-          echo "TOTAL=$TOTAL" >> $GITHUB_OUTPUT
+          echo "WARNINGS=${WARNINGS:-0}" >> $GITHUB_OUTPUT
+          echo "ERRORS=${ERRORS:-0}" >> $GITHUB_OUTPUT
+          echo "TOTAL=${TOTAL:-0}" >> $GITHUB_OUTPUT
 
       - name: Upload report
         uses: actions/upload-artifact@v4
