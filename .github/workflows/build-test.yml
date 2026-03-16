@@ -1,0 +1,50 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake gcc g++ lcov
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage"
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run Google Test
+        run: |
+          cd build
+          ctest --output-on-failure
+
+      - name: Capture coverage
+        run: |
+          lcov --directory build --capture --output-file coverage.info --ignore-errors mismatch,empty
+          lcov --remove coverage.info '/usr/*' '*/test/*' --output-file coverage.info
+
+      - name: Discord 성공 알림
+        if: success()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: '✅ 빌드/테스트 성공: `${{ github.repository }}` - ${{ github.ref_name }}'
+
+      - name: Discord 실패 알림
+        if: failure()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: '❌ 빌드/테스트 실패: `${{ github.repository }}` - ${{ github.ref_name }} 확인 필요!'
