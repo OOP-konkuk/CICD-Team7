@@ -32,6 +32,13 @@ jobs:
         run: |
           lcov --directory build --capture --output-file coverage.info --ignore-errors mismatch,empty
           lcov --remove coverage.info '/usr/*' '*/test/*' --output-file coverage.info
+          
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.info
+          fail_ci_if_error: false
 
       - name: Discord 성공 알림
         if: success()
