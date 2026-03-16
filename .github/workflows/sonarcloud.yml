@@ -1,0 +1,67 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+
+    env:
+      BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake gcc g++ lcov
+
+      - name: Install Build Wrapper
+        uses: SonarSource/sonarcloud-github-c-cpp@v2
+
+      - name: Configure & Build with wrapper
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage"
+          build-wrapper-linux-x86-64 --out-dir $BUILD_WRAPPER_OUT_DIR cmake --build build
+
+      - name: Run Tests
+        run: cd build && ctest --output-on-failure
+
+      - name: Capture coverage
+        run: |
+          lcov --directory build --capture --output-file coverage.info --ignore-errors mismatch,empty
+          lcov --remove coverage.info '/usr/*' '*/test/*' --output-file coverage.info
+
+      - name: Analyze on SonarCloud
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=OOP-konkuk_CICD-Team7
+            -Dsonar.organization=oop-konkuk
+            -Dsonar.cfamily.build-wrapper-output=${{ env.BUILD_WRAPPER_OUT_DIR }}
+            -Dsonar.cfamily.gcov.reportsPath=build
+
+      - name: Discord 성공 알림
+        if: success()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: '✅ SonarCloud 분석 완료: `${{ github.repository }}` - ${{ github.ref_name }}'
+
+      - name: Discord 실패 알림
+        if: failure()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: '❌ SonarCloud 분석 실패: `${{ github.repository }}` - ${{ github.ref_name }}'
