@@ -47,8 +47,8 @@ jobs:
           name: cppcheck-report
           path: cppcheck-report.txt
 
-      - name: Discord 알림
-        if: always()
+      - name: Discord 성공 알림
+        if: success()
         uses: Ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -60,3 +60,11 @@ jobs:
             • Style issues: ${{ steps.count_issues.outputs.STYLE }}
             • Performance issues: ${{ steps.count_issues.outputs.PERFORMANCE }}
             • Total: ${{ steps.count_issues.outputs.TOTAL }}
+
+      - name: Discord 실패 알림
+        if: failure()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "❌ Cppcheck 분석 실패: `${{ github.repository }}` - ${{ github.ref_name }} 확인 필요!"
