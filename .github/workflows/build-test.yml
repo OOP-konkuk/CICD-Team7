@@ -46,7 +46,9 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: '✅ 빌드/테스트 성공: `${{ github.repository }}` - ${{ github.ref_name }}'
+          args: |
+            ✅ 빌드/테스트 성공: `${{ github.repository }}` - ${{ github.ref_name }}
+            📊 커버리지 리포트: https://app.codecov.io/gh/OOP-konkuk/CICD-Team7
 
       - name: Discord 실패 알림
         if: failure()
