@@ -18,6 +18,9 @@ jobs:
       - name: Install dependencies
         run: sudo yum install -y lcov
 
+      - name: Clean Build Directory
+        run: rm -rf build
+
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage"
 
