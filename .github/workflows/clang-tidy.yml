@@ -49,7 +49,11 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "✅ Clang-Tidy 분석 완료: `${{ github.repository }}` - ${{ github.ref_name }} | Errors: ${{ steps.count_issues.outputs.ERRORS }} | Warnings: ${{ steps.count_issues.outputs.WARNINGS }} | Total: ${{ steps.count_issues.outputs.TOTAL }}"
+          args: |
+            🔍 **Clang-Tidy 분석 결과**: `${{ github.repository }}` - ${{ github.ref_name }}
+            • Errors: ${{ steps.count_issues.outputs.ERRORS }}
+            • Warnings: ${{ steps.count_issues.outputs.WARNINGS }}
+            • Total: ${{ steps.count_issues.outputs.TOTAL }}
 
       - name: Discord 실패 알림
         if: failure()
