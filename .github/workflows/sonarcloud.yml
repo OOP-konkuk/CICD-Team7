@@ -23,12 +23,15 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y cmake gcc g++ lcov
 
       - name: Install Build Wrapper
-        uses: SonarSource/sonarqube-github-c-cpp@v1
+        run: |
+          curl -sSLo build-wrapper-linux-x86.zip https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
+          unzip build-wrapper-linux-x86.zip
+          sudo mv build-wrapper-linux-x86/build-wrapper-linux-x86-64 /usr/local/bin/
 
       - name: Configure & Build with wrapper
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="--coverage"
-          build-wrapper-linux-x86-64 --out-dir $BUILD_WRAPPER_OUT_DIR cmake --build build
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build build
 
       - name: Run Tests
         run: cd build && ctest --output-on-failure
@@ -39,16 +42,16 @@ jobs:
           lcov --remove coverage.info '/usr/*' '*/test/*' --output-file coverage.info
 
       - name: Analyze on SonarCloud
-        uses: SonarSource/sonarcloud-github-action@master
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip sonar-scanner.zip
+          ./sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
+            -Dsonar.projectKey=OOP-konkuk_CICD-Team7 \
+            -Dsonar.organization=oop-konkuk \
+            -Dsonar.cfamily.build-wrapper-output=${{ env.BUILD_WRAPPER_OUT_DIR }} \
+            -Dsonar.cfamily.gcov.reportsPath=build
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=OOP-konkuk_CICD-Team7
-            -Dsonar.organization=oop-konkuk
-            -Dsonar.cfamily.build-wrapper-output=${{ env.BUILD_WRAPPER_OUT_DIR }}
-            -Dsonar.cfamily.gcov.reportsPath=build
 
       - name: Discord 성공 알림
         if: success()
