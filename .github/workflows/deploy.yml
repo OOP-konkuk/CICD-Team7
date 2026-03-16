@@ -47,18 +47,14 @@ jobs:
 
       - name: Discord 성공 알림
         if: success()
-        uses: Ilshidur/action-discord@master
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: |
-            ✅ 빌드/테스트/배포 성공: `${{ github.repository }}` - ${{ github.ref_name }}
-            📊 커버리지 리포트: https://app.codecov.io/gh/OOP-konkuk/CICD-Team7
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"content":"✅ 빌드/테스트/배포 성공: ${{ github.repository }} - ${{ github.ref_name }}"}' \
+          ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Discord 실패 알림
         if: failure()
-        uses: Ilshidur/action-discord@master
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: '❌ 빌드/테스트/배포 실패: `${{ github.repository }}` - ${{ github.ref_name }} 확인 필요!'
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"content":"❌ 빌드/테스트/배포 실패: ${{ github.repository }} - ${{ github.ref_name }} 확인 필요!"}' \
+          ${{ secrets.DISCORD_WEBHOOK }}
