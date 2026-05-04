@@ -8,5 +8,5 @@ private:
 public:
     explicit ErrorInfo(ErrorType error = ErrorType::NONE);
 
-    ErrorType getError() const;
+    ErrorType getError();
 };

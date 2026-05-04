@@ -2,6 +2,4 @@
 
 ErrorInfo::ErrorInfo(ErrorType error) : error(error) {}
 
-ErrorType ErrorInfo::getError() const {
-    return error;
-}
+ErrorType ErrorInfo::getError() {}

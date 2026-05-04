@@ -23,14 +23,6 @@ set(LIB_SOURCES
     src/RVCOrchestrator.cpp
 )
 
-set(TEST_SOURCES
-    test/test_main.cpp
-    test/handler/ErrorInfoTest.cpp
-    test/handler/CLIHandlerTest.cpp
-    test/handler/ErrorHandlerTest.cpp
-    test/controller/RVCPowerControllerTest.cpp
-)
-
 # 메인 실행파일
 add_executable(oop src/main.cpp ${LIB_SOURCES})
 target_include_directories(oop PRIVATE include)
@@ -47,8 +39,8 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 # 테스트 설정
 enable_testing()
-add_executable(oop_test ${TEST_SOURCES} ${LIB_SOURCES})
-target_include_directories(oop_test PRIVATE include test)
+add_executable(oop_test test/test_main.cpp ${LIB_SOURCES})
+target_include_directories(oop_test PRIVATE include)
 target_link_libraries(oop_test GTest::gtest_main)
 
 add_test(NAME oop_test COMMAND oop_test)
