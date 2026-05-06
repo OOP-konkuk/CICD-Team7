@@ -22,6 +22,5 @@ public:
     void requestPowerUp();
     void requestStartCleaning();
     void requestStopCleaning();
-    // 추가된 메서드
     bool update();
 };
