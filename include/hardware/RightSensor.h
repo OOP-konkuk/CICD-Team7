@@ -4,6 +4,4 @@
 class RightSensor : public Sensor {
 public:
     RightSensor();
-
-
 };

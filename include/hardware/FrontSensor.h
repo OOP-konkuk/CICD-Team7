@@ -4,6 +4,4 @@
 class FrontSensor : public Sensor {
 public:
     FrontSensor();
-
-
 };
