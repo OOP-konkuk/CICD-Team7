@@ -5,7 +5,6 @@
 class CleanerController {
 private:
     int boostDurationMs;
-    int boostTimer{0};
     bool boostRunning{false};
     std::chrono::steady_clock::time_point boostEndTime{};
 
