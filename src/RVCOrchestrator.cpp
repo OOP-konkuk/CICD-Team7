@@ -1,9 +1,30 @@
 #include "RVCOrchestrator.h"
 
-RVCOrchestrator::RVCOrchestrator(CLIHandler& cliHandler) : cliHandler(cliHandler) {}
+RVCOrchestrator::RVCOrchestrator(CLIHandler& cliHandler)
+    : cliHandler(cliHandler),
+      errorHandler(this)
+{}
 
-void RVCOrchestrator::powerOn() {}
+// UC1: Power On System
+void RVCOrchestrator::powerOn() {
+    powerController.initialize();
+    motorController.initialize();
+    cleanerController.initialize();
+    cliHandler.display("시스템 준비 완료!");
+}
 
-void RVCOrchestrator::powerOff() {}
+// UC8: Power Off System
+void RVCOrchestrator::powerOff() {
+    motorController.requestStopMoving();
+    cleanerController.requestStopCleaning();
+    cliHandler.display("시스템 종료 중...");
+    powerController.shutdown();
+}
 
-void RVCOrchestrator::notifyError(const ErrorInfo& error) {}
+// UC9: Power Off System - Exceptional
+void RVCOrchestrator::notifyError(const ErrorInfo& error) {
+    cliHandler.errDisplay(error);
+    motorController.requestStopMoving();
+    cleanerController.requestStopCleaning();
+    powerController.shutdown();
+}
