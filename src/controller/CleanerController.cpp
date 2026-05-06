@@ -4,6 +4,7 @@ CleanerController::CleanerController(int durationMs) : boostDurationMs(durationM
 
 void CleanerController::initialize() {
     boostRunning = false;
+    boostEndTime = {};
 }
 
 void CleanerController::requestStartCleaning() {
@@ -14,6 +15,7 @@ void CleanerController::requestStopCleaning() {
     cleaner.stopCleaning();
 
     boostRunning = false;
+    boostEndTime = {};
 }
 
 void CleanerController::requestPowerUp() {
