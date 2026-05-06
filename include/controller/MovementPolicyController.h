@@ -1,6 +1,9 @@
 #pragma once
 #include "common/types.h"
 #include "hardware/Sensor.h"
+#include "hardware/FrontSensor.h"
+#include "hardware/LeftSensor.h"
+#include "hardware/RightSensor.h"
 #include <memory>
 
 class MovementPolicyController {

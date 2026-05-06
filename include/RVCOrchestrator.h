@@ -9,26 +9,37 @@
 #include "controller/MovementPolicyController.h"
 #include "controller/CleaningPolicyController.h"
 
-// IErrorNotifiable 구현: ErrorHandler → RVCOrchestrator 역방향 호출 지원
 class RVCOrchestrator : public IErrorNotifiable {
 private:
     CLIHandler& cliHandler;
-    RVCPowerController powerController;
-    MotorController motorController;
-    CleanerController cleanerController;
-    MovementPolicyController movementPolicyController;
-    CleaningPolicyController cleaningPolicyController;
+
+    RVCPowerController* powerPtr;
+    MotorController* motorPtr;
+    CleanerController* cleanerPtr;
+    MovementPolicyController* movementPtr;
+    CleaningPolicyController* cleaningPolicyPtr;
+
     ErrorHandler errorHandler;
 
+    bool systemRunning{false};
+
 public:
-    explicit RVCOrchestrator(CLIHandler& cliHandler);
+
+    RVCOrchestrator(CLIHandler& cliHandler,
+                    RVCPowerController* power,
+                    MotorController* motor,
+                    CleanerController* cleaner,
+                    MovementPolicyController* movement,
+                    CleaningPolicyController* cleaningPolicy);
 
     void powerOn();
-    void powerOff();
-    void notifyError(const ErrorInfo& error) override;
-
+    void performCleaning();
     void detectObstacle();
     void turnLeft();
     void turnRight();
     void backwardAndTurn();
+    void performBoostCleaning();
+    void powerOff();
+    void notifyError(const ErrorInfo& error) override;
+  
 };

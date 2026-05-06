@@ -32,7 +32,9 @@ set(TEST_SOURCES
     test/controller/MotorControllerTest.cpp
     test/controller/CleanerControllerTest.cpp
     test/hardware/CleanerTest.cpp
+    test/hardware/SensorTest.cpp
     test/controller/CleaningPolicyControllerTest.cpp
+    test/RVCOrchestratorTest.cpp
 )
 
 # 메인 실행파일
