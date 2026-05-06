@@ -12,4 +12,7 @@ public:
 
     bool checkDust();
     StateType checkingState();
+    // 새로운 메서드
+    void changeToBoost();
+    void changeToNormal();
 };

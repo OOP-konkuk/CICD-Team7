@@ -1,14 +1,20 @@
 #pragma once
+#include <chrono>
 #include "hardware/Cleaner.h"
 
 class CleanerController {
 private:
-    int boostTimer;
+    int boostDurationMs;
+    bool boostRunning{false};
+    std::chrono::steady_clock::time_point boostEndTime{};
+
     Cleaner cleaner;
     ICleaner* cleanerPtr;
 
+    bool updateBoostTimerFromClock();
+
 public:
-    CleanerController();
+    explicit CleanerController(int durationMs = 5 * 60 * 1000);
     explicit CleanerController(ICleaner* c);
     CleanerController(const CleanerController&) = delete;
 
@@ -16,4 +22,6 @@ public:
     void requestPowerUp();
     void requestStartCleaning();
     void requestStopCleaning();
+    // 추가된 메서드
+    bool update();
 };

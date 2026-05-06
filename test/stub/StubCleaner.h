@@ -11,6 +11,7 @@ public:
     void startCleaning() override { startCleaningCalled = true; ++callCount; }
     void stopCleaning() override { stopCleaningCalled = true; ++callCount; }
     void powerUp() override { powerUpCalled = true; ++callCount; }
+    void powerDown() override {}
 
     void reset() {
         startCleaningCalled = stopCleaningCalled = powerUpCalled = false;

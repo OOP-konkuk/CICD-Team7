@@ -31,6 +31,8 @@ set(TEST_SOURCES
     test/controller/MovementPolicyControllerTest.cpp
     test/controller/MotorControllerTest.cpp
     test/controller/CleanerControllerTest.cpp
+    test/hardware/CleanerTest.cpp
+    test/controller/CleaningPolicyControllerTest.cpp
 )
 
 # 메인 실행파일
@@ -45,6 +47,7 @@ FetchContent_Declare(
         URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
 )
 FetchContent_MakeAvailable(googletest)
+
 
 # 테스트 설정
 enable_testing()
