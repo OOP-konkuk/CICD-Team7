@@ -1,4 +1,7 @@
 #include "controller/MovementPolicyController.h"
+#include "hardware/FrontSensor.h"
+#include "hardware/LeftSensor.h"
+#include "hardware/RightSensor.h"
 
 MovementPolicyController::MovementPolicyController()
     : frontSensor(std::make_unique<FrontSensor>()),
