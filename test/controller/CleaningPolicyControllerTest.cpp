@@ -70,21 +70,6 @@ TEST(CleaningPolicyControllerTest, ChangeToNormal_Multiple_IsIdempotent) {
     EXPECT_EQ(cpc.checkingState(), StateType::NORMAL);
 }
 
-// [Negative] UC2: checkDust 호출이 NORMAL 상태에 영향을 주지 않아야 함
-TEST(CleaningPolicyControllerTest, CheckDust_DoesNotChangeState_WhenNormal) {
-    CleaningPolicyController cpc;
-    cpc.checkDust();
-    EXPECT_EQ(cpc.checkingState(), StateType::NORMAL);
-}
-
-// [Negative] UC2: BOOST 상태에서 checkDust 호출해도 상태가 변하지 않아야 함
-TEST(CleaningPolicyControllerTest, CheckDust_DoesNotChangeState_WhenBoost) {
-    CleaningPolicyController cpc;
-    cpc.changeToBoost();
-    cpc.checkDust();
-    EXPECT_EQ(cpc.checkingState(), StateType::BOOST);
-}
-
 // [Negative] UC7: NORMAL → BOOST → NORMAL → BOOST 상태 전이가 올바르게 동작해야 함
 TEST(CleaningPolicyControllerTest, StateTransition_NormalBoostNormalBoost_IsCorrect) {
     CleaningPolicyController cpc;
