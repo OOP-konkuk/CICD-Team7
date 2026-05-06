@@ -12,5 +12,5 @@ public:
     void startCleaning() override;
     void stopCleaning() override;
     void powerUp() override;
-    void powerDown();
+    void powerDown() override;
 };
