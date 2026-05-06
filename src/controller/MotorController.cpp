@@ -26,5 +26,5 @@ void MotorController::move(DirectionType direction) {
             motorPtr->turnRight();
             break;
     }
-    isRotating = true;
+    isRotating = (direction == DirectionType::LEFT || direction == DirectionType::RIGHT);
 }
