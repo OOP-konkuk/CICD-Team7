@@ -2,7 +2,7 @@
 
 MotorController::MotorController() : isRotating(false), motorPtr(&motor) {}
 
-MotorController::MotorController(Motor* m) : isRotating(false), motorPtr(m) {}
+MotorController::MotorController(IMotor* m) : isRotating(false), motorPtr(m) {}
 
 void MotorController::initialize() { isRotating = false; }
 

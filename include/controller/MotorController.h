@@ -6,11 +6,11 @@ class MotorController {
 private:
     bool isRotating;
     Motor motor;
-    Motor* motorPtr;
+    IMotor* motorPtr;
 
 public:
     MotorController();
-    explicit MotorController(Motor* m);
+    explicit MotorController(IMotor* m);
     MotorController(const MotorController&) = delete;
 
     void initialize();

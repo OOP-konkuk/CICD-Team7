@@ -1,7 +1,7 @@
 #pragma once
-#include "hardware/Cleaner.h"
+#include "hardware/ICleaner.h"
 
-class StubCleaner : public Cleaner {
+class StubCleaner : public ICleaner {
 public:
     bool startCleaningCalled = false;
     bool stopCleaningCalled = false;

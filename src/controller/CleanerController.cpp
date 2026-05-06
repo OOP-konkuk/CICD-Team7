@@ -2,7 +2,7 @@
 
 CleanerController::CleanerController() : boostTimer(0), cleanerPtr(&cleaner) {}
 
-CleanerController::CleanerController(Cleaner* c) : boostTimer(0), cleanerPtr(c) {}
+CleanerController::CleanerController(ICleaner* c) : boostTimer(0), cleanerPtr(c) {}
 
 void CleanerController::initialize() {}
 

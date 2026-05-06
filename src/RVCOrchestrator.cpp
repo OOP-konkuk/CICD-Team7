@@ -15,7 +15,6 @@ void RVCOrchestrator::powerOn() {
 
 // UC3: Detect Obstacle
 void RVCOrchestrator::detectObstacle() {
-    if (!movementPolicyController.checkObstacle()) return;
     cleanerController.requestStopCleaning();
     motorController.requestStopMoving();
     DirectionType dir = movementPolicyController.checkMovementPolicy();

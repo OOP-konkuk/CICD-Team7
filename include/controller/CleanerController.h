@@ -5,11 +5,11 @@ class CleanerController {
 private:
     int boostTimer;
     Cleaner cleaner;
-    Cleaner* cleanerPtr;
+    ICleaner* cleanerPtr;
 
 public:
     CleanerController();
-    explicit CleanerController(Cleaner* c);
+    explicit CleanerController(ICleaner* c);
     CleanerController(const CleanerController&) = delete;
 
     void initialize();

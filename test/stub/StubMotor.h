@@ -1,9 +1,9 @@
 #pragma once
-#include "hardware/Motor.h"
+#include "hardware/IMotor.h"
 #include <string>
 #include <vector>
 
-class StubMotor : public Motor {
+class StubMotor : public IMotor {
 public:
     bool moveForwardCalled = false;
     bool moveBackwardCalled = false;

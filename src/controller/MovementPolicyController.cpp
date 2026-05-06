@@ -1,19 +1,24 @@
 #include "controller/MovementPolicyController.h"
 
 MovementPolicyController::MovementPolicyController()
-    : direction(DirectionType::FORWARD),
-      frontPtr(&frontSensor), leftPtr(&leftSensor), rightPtr(&rightSensor) {}
+    : frontSensor(std::make_unique<FrontSensor>()),
+      leftSensor(std::make_unique<LeftSensor>()),
+      rightSensor(std::make_unique<RightSensor>()) {}
 
-MovementPolicyController::MovementPolicyController(Sensor* front, Sensor* left, Sensor* right)
-    : direction(DirectionType::FORWARD),
-      frontPtr(front), leftPtr(left), rightPtr(right) {}
+MovementPolicyController::MovementPolicyController(
+    std::unique_ptr<Sensor> front,
+    std::unique_ptr<Sensor> left,
+    std::unique_ptr<Sensor> right)
+    : frontSensor(std::move(front)),
+      leftSensor(std::move(left)),
+      rightSensor(std::move(right)) {}
 
 bool MovementPolicyController::checkObstacle() {
-    return frontPtr->requestStatus();
+    return frontSensor->requestStatus();
 }
 
 DirectionType MovementPolicyController::checkMovementPolicy() {
-    if (!leftPtr->requestStatus())  return DirectionType::LEFT;
-    if (!rightPtr->requestStatus()) return DirectionType::RIGHT;
+    if (!leftSensor->requestStatus())  return DirectionType::LEFT;
+    if (!rightSensor->requestStatus()) return DirectionType::RIGHT;
     return DirectionType::BACKWARD;
 }
