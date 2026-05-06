@@ -2,6 +2,6 @@
 
 CleaningPolicyController::CleaningPolicyController() : state(StateType::NORMAL) {}
 
-bool CleaningPolicyController::checkDust() {}
+bool CleaningPolicyController::checkDust() { return false; }
 
-StateType CleaningPolicyController::checkingState() {}
+StateType CleaningPolicyController::checkingState() { return state; }

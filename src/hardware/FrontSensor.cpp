@@ -2,4 +2,4 @@
 
 FrontSensor::FrontSensor() {}
 
-bool FrontSensor::requestStatus() {}
+bool FrontSensor::requestStatus() { return false; }

@@ -2,4 +2,4 @@
 
 Sensor::Sensor() : isDetected(false) {}
 
-bool Sensor::getIsDetected() {}
+bool Sensor::getIsDetected() { return false; }
