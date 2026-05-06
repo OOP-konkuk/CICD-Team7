@@ -24,10 +24,13 @@ set(LIB_SOURCES
 )
 
 set(TEST_SOURCES
-        test/handler/ErrorInfoTest.cpp
+    test/handler/ErrorInfoTest.cpp
     test/handler/CLIHandlerTest.cpp
     test/handler/ErrorHandlerTest.cpp
     test/controller/RVCPowerControllerTest.cpp
+    test/controller/MovementPolicyControllerTest.cpp
+    test/controller/MotorControllerTest.cpp
+    test/controller/CleanerControllerTest.cpp
 )
 
 # 메인 실행파일

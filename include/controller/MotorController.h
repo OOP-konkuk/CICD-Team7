@@ -6,9 +6,12 @@ class MotorController {
 private:
     bool isRotating;
     Motor motor;
+    Motor* motorPtr;
 
 public:
     MotorController();
+    explicit MotorController(Motor* m);
+    MotorController(const MotorController&) = delete;
 
     void initialize();
     void requestStopMoving();
