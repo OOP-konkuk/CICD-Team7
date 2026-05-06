@@ -24,6 +24,7 @@ void RVCOrchestrator::powerOn() {
     motorPtr->initialize();
     cleanerPtr->initialize();
     cliHandler.display("시스템 준비 완료!");
+    performCleaning();
 }
 
 // UC2: Perform Cleaning
