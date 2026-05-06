@@ -58,3 +58,14 @@ target_include_directories(oop_test PRIVATE include test)
 target_link_libraries(oop_test GTest::gtest_main)
 
 add_test(NAME oop_test COMMAND oop_test)
+
+# System Tests (GTest 의존성 없음)
+add_executable(oop_system_test
+    test/system/RVCSystemTest.cpp
+    ${LIB_SOURCES}
+)
+target_include_directories(oop_system_test PRIVATE include test)
+add_test(
+    NAME oop_system_test
+    COMMAND oop_system_test --xml=${CMAKE_BINARY_DIR}/system_test_results.xml
+)
