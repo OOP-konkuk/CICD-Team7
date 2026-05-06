@@ -37,10 +37,16 @@ FetchContent_MakeAvailable(googletest)
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
+set(TEST_SOURCES
+    test/hardware/CleanerTest.cpp
+    test/controller/CleanerControllerTest.cpp
+    test/controller/CleaningPolicyControllerTest.cpp
+)
+
 # 테스트 설정
 enable_testing()
-add_executable(oop_test test/test_main.cpp ${LIB_SOURCES})
-target_include_directories(oop_test PRIVATE include)
+add_executable(oop_test ${TEST_SOURCES} ${LIB_SOURCES})
+target_include_directories(oop_test PRIVATE include test)
 target_link_libraries(oop_test GTest::gtest_main)
 
 add_test(NAME oop_test COMMAND oop_test)
