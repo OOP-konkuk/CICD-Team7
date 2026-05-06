@@ -16,7 +16,7 @@ public:
     MovementPolicyController();
     MovementPolicyController(std::unique_ptr<Sensor> front,
                              std::unique_ptr<Sensor> left,
-                             std::unique_ptr<Sensor> right); // constructor for testing.
+                             std::unique_ptr<Sensor> right);
     MovementPolicyController(const MovementPolicyController&) = delete;
 
     bool checkObstacle();

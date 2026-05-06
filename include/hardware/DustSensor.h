@@ -4,6 +4,4 @@
 class DustSensor : public Sensor {
 public:
     DustSensor();
-
-
 };
