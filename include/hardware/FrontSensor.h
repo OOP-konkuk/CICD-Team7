@@ -5,5 +5,5 @@ class FrontSensor : public Sensor {
 public:
     FrontSensor();
 
-    bool requestStatus() override;
+
 };

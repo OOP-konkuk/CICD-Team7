@@ -26,4 +26,9 @@ public:
     void powerOn();
     void powerOff();
     void notifyError(const ErrorInfo& error) override;
+
+    void detectObstacle();
+    void turnLeft();
+    void turnRight();
+    void backwardAndTurn();
 };

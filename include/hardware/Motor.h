@@ -1,13 +1,13 @@
 #pragma once
+#include "hardware/IMotor.h"
 
-class Motor {
+class Motor : public IMotor {
 public:
     Motor() = default;
-    virtual ~Motor() = default;
 
-    virtual void moveForward();
-    virtual void moveBackward();
-    virtual void turnLeft();
-    virtual void turnRight();
-    virtual void stopMoving();
+    void moveForward() override;
+    void moveBackward() override;
+    void turnLeft() override;
+    void turnRight() override;
+    void stopMoving() override;
 };

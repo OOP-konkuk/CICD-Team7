@@ -24,10 +24,13 @@ set(LIB_SOURCES
 )
 
 set(TEST_SOURCES
-        test/handler/ErrorInfoTest.cpp
+    test/handler/ErrorInfoTest.cpp
     test/handler/CLIHandlerTest.cpp
     test/handler/ErrorHandlerTest.cpp
     test/controller/RVCPowerControllerTest.cpp
+    test/controller/MovementPolicyControllerTest.cpp
+    test/controller/MotorControllerTest.cpp
+    test/controller/CleanerControllerTest.cpp
 )
 
 # 메인 실행파일
@@ -35,14 +38,13 @@ add_executable(oop src/main.cpp ${LIB_SOURCES})
 target_include_directories(oop PRIVATE include)
 
 # Google Test
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 include(FetchContent)
 FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
 )
 FetchContent_MakeAvailable(googletest)
-
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 # 테스트 설정
 enable_testing()
