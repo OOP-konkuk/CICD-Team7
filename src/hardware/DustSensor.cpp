@@ -2,4 +2,3 @@
 
 DustSensor::DustSensor() {}
 
-bool DustSensor::requestStatus() {}

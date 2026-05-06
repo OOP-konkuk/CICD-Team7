@@ -1,4 +1,5 @@
 #pragma once
+#include "handler/IErrorNotifiable.h"
 #include "handler/ErrorInfo.h"
 #include "handler/CLIHandler.h"
 #include "handler/ErrorHandler.h"
@@ -8,7 +9,8 @@
 #include "controller/MovementPolicyController.h"
 #include "controller/CleaningPolicyController.h"
 
-class RVCOrchestrator {
+// IErrorNotifiable 구현: ErrorHandler → RVCOrchestrator 역방향 호출 지원
+class RVCOrchestrator : public IErrorNotifiable {
 private:
     CLIHandler& cliHandler;
     RVCPowerController powerController;
@@ -23,5 +25,10 @@ public:
 
     void powerOn();
     void powerOff();
-    void notifyError(const ErrorInfo& error);
+    void notifyError(const ErrorInfo& error) override;
+
+    void detectObstacle();
+    void turnLeft();
+    void turnRight();
+    void backwardAndTurn();
 };

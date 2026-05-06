@@ -23,11 +23,24 @@ set(LIB_SOURCES
     src/RVCOrchestrator.cpp
 )
 
+set(TEST_SOURCES
+    test/handler/ErrorInfoTest.cpp
+    test/handler/CLIHandlerTest.cpp
+    test/handler/ErrorHandlerTest.cpp
+    test/controller/RVCPowerControllerTest.cpp
+    test/controller/MovementPolicyControllerTest.cpp
+    test/controller/MotorControllerTest.cpp
+    test/controller/CleanerControllerTest.cpp
+    test/hardware/CleanerTest.cpp
+    test/controller/CleaningPolicyControllerTest.cpp
+)
+
 # 메인 실행파일
 add_executable(oop src/main.cpp ${LIB_SOURCES})
 target_include_directories(oop PRIVATE include)
 
 # Google Test
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 include(FetchContent)
 FetchContent_Declare(
         googletest
@@ -35,13 +48,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-set(TEST_SOURCES
-    test/hardware/CleanerTest.cpp
-    test/controller/CleanerControllerTest.cpp
-    test/controller/CleaningPolicyControllerTest.cpp
-)
 
 # 테스트 설정
 enable_testing()

@@ -9,11 +9,14 @@ private:
     std::chrono::steady_clock::time_point boostEndTime{};
 
     Cleaner cleaner;
+    ICleaner* cleanerPtr;
 
     bool updateBoostTimerFromClock();
 
 public:
-    explicit CleanerController(int boostDurationMs = 5 * 60 * 1000);
+    explicit CleanerController(int durationMs = 5 * 60 * 1000);
+    explicit CleanerController(ICleaner* c);
+    CleanerController(const CleanerController&) = delete;
 
     void initialize();
     void requestPowerUp();

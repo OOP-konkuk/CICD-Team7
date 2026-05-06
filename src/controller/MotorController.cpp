@@ -1,9 +1,30 @@
 #include "controller/MotorController.h"
 
-MotorController::MotorController() : isRotating(false) {}
+MotorController::MotorController() : isRotating(false), motorPtr(&motor) {}
 
-void MotorController::initialize() {}
+MotorController::MotorController(IMotor* m) : isRotating(false), motorPtr(m) {}
 
-void MotorController::requestStopMoving() {}
+void MotorController::initialize() { isRotating = false; }
 
-void MotorController::move(DirectionType direction) {}
+void MotorController::requestStopMoving() {
+    motorPtr->stopMoving();
+    isRotating = false;
+}
+
+void MotorController::move(DirectionType direction) {
+    switch (direction) {
+        case DirectionType::FORWARD:
+            motorPtr->moveForward();
+            break;
+        case DirectionType::BACKWARD:
+            motorPtr->moveBackward();
+            break;
+        case DirectionType::LEFT:
+            motorPtr->turnLeft();
+            break;
+        case DirectionType::RIGHT:
+            motorPtr->turnRight();
+            break;
+    }
+    isRotating = true;
+}

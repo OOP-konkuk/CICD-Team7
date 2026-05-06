@@ -1,6 +1,10 @@
 #include "controller/CleanerController.h"
 
-CleanerController::CleanerController(int durationMs) : boostDurationMs(durationMs) {}
+CleanerController::CleanerController(int durationMs)
+    : boostDurationMs(durationMs), cleanerPtr(&cleaner) {}
+
+CleanerController::CleanerController(ICleaner* c)
+    : boostDurationMs(0), cleanerPtr(c) {}
 
 void CleanerController::initialize() {
     boostRunning = false;
@@ -8,18 +12,18 @@ void CleanerController::initialize() {
 }
 
 void CleanerController::requestStartCleaning() {
-    cleaner.startCleaning();
+    cleanerPtr->startCleaning();
 }
 
 void CleanerController::requestStopCleaning() {
-    cleaner.stopCleaning();
+    cleanerPtr->stopCleaning();
 
     boostRunning = false;
     boostEndTime = {};
 }
 
 void CleanerController::requestPowerUp() {
-    cleaner.powerUp();
+    cleanerPtr->powerUp();
 
     const auto now = std::chrono::steady_clock::now();
     boostEndTime = now + std::chrono::milliseconds(boostDurationMs);
