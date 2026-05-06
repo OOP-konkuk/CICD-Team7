@@ -8,6 +8,6 @@ public:
     Sensor();
     virtual ~Sensor() = default;
 
-    virtual bool requestStatus() = 0;
+    virtual bool requestStatus();
     bool getIsDetected();
 };

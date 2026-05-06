@@ -5,5 +5,5 @@ class RightSensor : public Sensor {
 public:
     RightSensor();
 
-    bool requestStatus() override;
+
 };

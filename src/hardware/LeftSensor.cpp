@@ -2,4 +2,3 @@
 
 LeftSensor::LeftSensor() {}
 
-bool LeftSensor::requestStatus() { return false; }

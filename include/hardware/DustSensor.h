@@ -5,5 +5,5 @@ class DustSensor : public Sensor {
 public:
     DustSensor();
 
-    bool requestStatus() override;
+
 };

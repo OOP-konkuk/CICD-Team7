@@ -2,4 +2,3 @@
 
 RightSensor::RightSensor() {}
 
-bool RightSensor::requestStatus() { return false; }
