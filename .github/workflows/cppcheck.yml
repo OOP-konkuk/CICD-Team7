@@ -23,6 +23,8 @@ jobs:
         run: |
           cppcheck --enable=all --inconclusive --quiet --force --std=c++17 \
             --suppress=missingIncludeSystem \
+            --suppress=missingInclude \
+            -I include \
             --output-file=cppcheck-report.txt \
             ./src || true
 
