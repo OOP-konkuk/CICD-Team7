@@ -1,335 +1,351 @@
 #include "system/SimpleTestRunner.h"
-#include <memory>
-#include <sstream>
-#include <iostream>
-#include "RVCOrchestrator.h"
-#include "stub/StubMotor.h"
-#include "stub/StubCleaner.h"
-#include "stub/StubSensor.h"
+#include "simulator/RVCSimulator.h"
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  Shared fixture
-//  Constructed on the stack inside each test lambda; RAII restores stdout.
+//  RVCSystemSimulator 사용법
+//
+//  sim.pressOn()              → User가 전원 버튼을 누름 (UC1)
+//  sim.pressOff()             → User가 전원 버튼을 눌러 종료 (UC8)
+//  sim.setLeftObstacle(true)  → 왼쪽 센서에 장애물 주입
+//  sim.motor.isTurningLeft()  → 모터 현재 상태 확인
+//  sim.cleaner.isBoost()      → 청소기 현재 모드 확인
+//  sim.displayOutput()        → 사용자에게 출력된 메시지 확인
 // ──────────────────────────────────────────────────────────────────────────────
-struct F {
-    CLIHandler               cliHandler;
-    StubMotor                stubMotor;
-    StubCleaner              stubCleaner;
-    StubSensor*              front{};
-    StubSensor*              left{};
-    StubSensor*              right{};
-    MotorController          motorCtrl;
-    CleanerController        cleanerCtrl;
-    std::unique_ptr<MovementPolicyController> movCtrl;
-    RVCPowerController       powerCtrl;
-    CleaningPolicyController cleaningPolicyCtrl;
-    std::unique_ptr<RVCOrchestrator> orc;
-    std::ostringstream       captured;
-    std::streambuf*          origBuf{};
-
-    F() : motorCtrl(&stubMotor), cleanerCtrl(&stubCleaner) {
-        auto f = std::make_unique<StubSensor>();
-        auto l = std::make_unique<StubSensor>();
-        auto r = std::make_unique<StubSensor>();
-        front = f.get(); left = l.get(); right = r.get();
-        movCtrl = std::make_unique<MovementPolicyController>(
-            std::move(f), std::move(l), std::move(r));
-        orc = std::make_unique<RVCOrchestrator>(
-            cliHandler, &powerCtrl, &motorCtrl,
-            &cleanerCtrl, movCtrl.get(), &cleaningPolicyCtrl);
-        origBuf = std::cout.rdbuf(captured.rdbuf());
-    }
-    ~F() { std::cout.rdbuf(origBuf); }
-    std::string out() { return captured.str(); }
-};
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  UC1 — Power On (4 cases)
+//  Flow 1 — Power Lifecycle (5 cases)
+//  User가 전원 켜기/끄기를 수행하는 UC1·UC8 흐름을 검증한다.
 // ══════════════════════════════════════════════════════════════════════════════
 
-// [Positive] powerOn() 출력이 "[RVC] 시스템 준비 완료!\n" 와 정확히 일치하는지 확인
-STEST_REGISTER(UC1_System, UC1_PowerOn_ExactOutputFormat, []() {
-    F f;
-    f.orc->powerOn();
-    STEST_EXPECT_EQ(f.out(), std::string("[RVC] 시스템 준비 완료!\n"));
+// [Positive] User가 전원을 켜고 끄면 준비 완료 → 종료 메시지가 순서대로 출력된다
+STEST_REGISTER(Flow1_PowerLifecycle, PressOn_ThenOff_MessagesInOrder, []() {
+    RVCSystemSimulator sim;
+    sim.pressOn();
+    sim.pressOff();
+    STEST_EXPECT_EQ(sim.displayOutput(),
+        std::string("[RVC] 시스템 준비 완료!\n[RVC] 시스템 종료 중...\n"));
 });
 
-// [Positive] powerOn() 후 systemRunning이 true가 되어 powerOff() 시 stopMoving 이 호출되는지 확인
-STEST_REGISTER(UC1_System, UC1_PowerOn_SystemRunning_EnablesPowerOff, []() {
-    F f;
-    f.orc->powerOn();
-    f.orc->powerOff();
-    STEST_EXPECT_TRUE(f.stubMotor.stopMovingCalled);
+// [Positive] User가 전원을 끄면 모터가 STOPPED 상태가 된다
+STEST_REGISTER(Flow1_PowerLifecycle, PressOn_ThenOff_MotorIsStopped, []() {
+    RVCSystemSimulator sim;
+    sim.pressOn();
+    sim.pressOff();
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
 });
 
-// [Negative] powerOn() 시 모터 하드웨어가 직접 호출되지 않는지 확인
-STEST_REGISTER(UC1_System, UC1_PowerOn_MotorHardwareNotCalled, []() {
-    F f;
-    f.orc->powerOn();
-    STEST_EXPECT_EQ(f.stubMotor.callCount, 0);
+// [Positive] User가 전원을 끄면 청소기가 IDLE 모드가 된다
+STEST_REGISTER(Flow1_PowerLifecycle, PressOn_ThenOff_CleanerIsIdle, []() {
+    RVCSystemSimulator sim;
+    sim.pressOn();
+    sim.pressOff();
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
 });
 
-// [Negative] powerOn() 출력에 "[ERROR]" 가 포함되지 않는지 확인
-STEST_REGISTER(UC1_System, UC1_PowerOn_NoErrorOutput, []() {
-    F f;
-    f.orc->powerOn();
-    STEST_EXPECT_NOT_CONTAINS(f.out(), "[ERROR]");
+// [Negative] User가 전원만 켜면 모터는 STOPPED 상태를 유지한다
+STEST_REGISTER(Flow1_PowerLifecycle, PressOn_Only_MotorRemainsStoped, []() {
+    RVCSystemSimulator sim;
+    sim.pressOn();
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
+});
+
+// [Negative] User가 전원만 켜면 청소기는 IDLE 모드를 유지한다
+STEST_REGISTER(Flow1_PowerLifecycle, PressOn_Only_CleanerRemainsIdle, []() {
+    RVCSystemSimulator sim;
+    sim.pressOn();
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  UC2 — Perform Cleaning (3 cases)
-//  Note: systemRunning=false 기본값이므로 powerOn() 없이 호출하면 while 루프가
-//        즉시 종료되어 무한루프 없이 startCleaning + forward 만 실행된다.
+//  Flow 2 — Cleaning Session (5 cases)
+//  UC2 자동 청소 시작 후 하드웨어 상태 전이와 전원 종료까지의 흐름을 검증한다.
 // ══════════════════════════════════════════════════════════════════════════════
 
-// [Positive] performCleaning() 호출 시 startCleaning 이 호출되는지 확인
-STEST_REGISTER(UC2_System, UC2_PerformCleaning_StartsCleaning, []() {
-    F f;
-    f.orc->performCleaning();
-    STEST_EXPECT_TRUE(f.stubCleaner.startCleaningCalled);
+// [Positive] 청소 시작 시 청소기가 NORMAL 모드로 전환된다
+STEST_REGISTER(Flow2_CleaningSession, Cleaning_CleanerEntersNormalMode, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    STEST_EXPECT_TRUE(sim.cleaner.isCleaning());
 });
 
-// [Positive] performCleaning() 호출 시 FORWARD 이동이 호출되는지 확인
-STEST_REGISTER(UC2_System, UC2_PerformCleaning_MovesForward, []() {
-    F f;
-    f.orc->performCleaning();
-    STEST_EXPECT_TRUE(f.stubMotor.moveForwardCalled);
+// [Positive] 청소 시작 시 모터가 FORWARD 상태로 전환된다
+STEST_REGISTER(Flow2_CleaningSession, Cleaning_MotorEntersForwardState, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    STEST_EXPECT_TRUE(sim.motor.isMovingForward());
 });
 
-// [Negative] performCleaning() 호출 직후 stopMoving 이 호출되지 않는지 확인
-STEST_REGISTER(UC2_System, UC2_PerformCleaning_DoesNotStopMotor, []() {
-    F f;
-    f.orc->performCleaning();
-    STEST_EXPECT_FALSE(f.stubMotor.stopMovingCalled);
+// [Positive] 청소 후 User가 전원을 끄면 모터 STOPPED, 청소기 IDLE 상태가 된다
+STEST_REGISTER(Flow2_CleaningSession, Cleaning_ThenPressOff_BothHardwareStopped, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    sim.pressOff();
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  UC3 — Detect Obstacle (4 cases)
-// ══════════════════════════════════════════════════════════════════════════════
-
-// [Positive] 왼쪽 비어있을 때 callLog 가 ["stop","turnLeft"] 순서인지 확인
-STEST_REGISTER(UC3_System, UC3_DetectObstacle_LeftFree_CallSequence, []() {
-    F f;
-    f.left->detectedValue = false;
-    f.orc->detectObstacle();
-    STEST_EXPECT_TRUE(f.stubCleaner.stopCleaningCalled);
-    auto& log = f.stubMotor.callLog;
-    STEST_EXPECT_EQ(log.size(), (size_t)2);
-    STEST_EXPECT_EQ(log[0], std::string("stop"));
-    STEST_EXPECT_EQ(log[1], std::string("turnLeft"));
+// [Negative] 청소 중 모터는 STOPPED 상태가 아니다
+STEST_REGISTER(Flow2_CleaningSession, Cleaning_MotorIsNotStopped, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    STEST_EXPECT_FALSE(sim.motor.isStopped());
 });
 
-// [Positive] 왼쪽 막힘·오른쪽 비어있을 때 callLog 가 ["stop","turnRight"] 이고 turnLeft 는 없는지 확인
-STEST_REGISTER(UC3_System, UC3_DetectObstacle_RightFree_CallSequence, []() {
-    F f;
-    f.left->detectedValue  = true;
-    f.right->detectedValue = false;
-    f.orc->detectObstacle();
-    auto& log = f.stubMotor.callLog;
-    STEST_EXPECT_EQ(log.size(), (size_t)2);
-    STEST_EXPECT_EQ(log[0], std::string("stop"));
-    STEST_EXPECT_EQ(log[1], std::string("turnRight"));
-    STEST_EXPECT_FALSE(f.stubMotor.turnLeftCalled);
-});
-
-// [Negative] 양쪽 모두 막혔을 때 callLog 가 ["stop","backward"] 이고 turn 이 없는지 확인
-STEST_REGISTER(UC3_System, UC3_DetectObstacle_BothBlocked_NoTurn, []() {
-    F f;
-    f.left->detectedValue  = true;
-    f.right->detectedValue = true;
-    f.orc->detectObstacle();
-    auto& log = f.stubMotor.callLog;
-    STEST_EXPECT_EQ(log.size(), (size_t)2);
-    STEST_EXPECT_EQ(log[0], std::string("stop"));
-    STEST_EXPECT_EQ(log[1], std::string("backward"));
-    STEST_EXPECT_FALSE(f.stubMotor.turnLeftCalled);
-    STEST_EXPECT_FALSE(f.stubMotor.turnRightCalled);
-});
-
-// [Negative] detectObstacle() 호출 시 display 출력이 없는지 확인
-STEST_REGISTER(UC3_System, UC3_DetectObstacle_NoDisplayOutput, []() {
-    F f;
-    f.orc->detectObstacle();
-    STEST_EXPECT_TRUE(f.out().empty());
+// [Negative] 청소 중 청소기는 IDLE 모드가 아니다
+STEST_REGISTER(Flow2_CleaningSession, Cleaning_CleanerIsNotIdle, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    STEST_EXPECT_FALSE(sim.cleaner.isIdle());
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  UC4 — Turn Left (2 cases)
+//  Flow 3 — Obstacle Avoidance (5 cases)
+//  UC3 장애물 감지 시 센서 환경에 따라 모터가 올바른 상태로 전환되는지 검증한다.
 // ══════════════════════════════════════════════════════════════════════════════
 
-// [Positive] turnLeft() 호출 시 motor.turnLeft 가 호출되는지 확인
-STEST_REGISTER(UC4_System, UC4_TurnLeft_CallsMotorTurnLeft, []() {
-    F f;
-    f.orc->turnLeft();
-    STEST_EXPECT_TRUE(f.stubMotor.turnLeftCalled);
+// [Positive] 왼쪽 장애물 없음 환경에서 장애물 감지 시 모터가 TURN_LEFT 상태가 된다
+STEST_REGISTER(Flow3_ObstacleAvoidance, EnvLeftFree_MotorEntersTurnLeftState, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(false);
+    sim.orc->detectObstacle();
+    STEST_EXPECT_TRUE(sim.motor.isTurningLeft());
 });
 
-// [Negative] turnLeft() 호출 시 turnRight·backward·stopMoving 이 호출되지 않는지 확인
-STEST_REGISTER(UC4_System, UC4_TurnLeft_NoSideEffects, []() {
-    F f;
-    f.orc->turnLeft();
-    STEST_EXPECT_FALSE(f.stubMotor.turnRightCalled);
-    STEST_EXPECT_FALSE(f.stubMotor.moveBackwardCalled);
-    STEST_EXPECT_FALSE(f.stubMotor.stopMovingCalled);
+// [Positive] 오른쪽만 열린 환경에서 장애물 감지 시 모터가 TURN_RIGHT 상태가 된다
+STEST_REGISTER(Flow3_ObstacleAvoidance, EnvRightFree_MotorEntersTurnRightState, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(false);
+    sim.orc->detectObstacle();
+    STEST_EXPECT_TRUE(sim.motor.isTurningRight());
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  UC5 — Turn Right (2 cases)
-// ══════════════════════════════════════════════════════════════════════════════
-
-// [Positive] turnRight() 호출 시 motor.turnRight 가 호출되는지 확인
-STEST_REGISTER(UC5_System, UC5_TurnRight_CallsMotorTurnRight, []() {
-    F f;
-    f.orc->turnRight();
-    STEST_EXPECT_TRUE(f.stubMotor.turnRightCalled);
+// [Positive] 양방향 막힌 환경에서 장애물 감지 시 모터가 BACKWARD 상태가 된다
+STEST_REGISTER(Flow3_ObstacleAvoidance, EnvBothBlocked_MotorEntersBackwardState, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(true);
+    sim.orc->detectObstacle();
+    STEST_EXPECT_TRUE(sim.motor.isMovingBackward());
 });
 
-// [Negative] turnRight() 호출 시 turnLeft·backward·stopMoving 이 호출되지 않는지 확인
-STEST_REGISTER(UC5_System, UC5_TurnRight_NoSideEffects, []() {
-    F f;
-    f.orc->turnRight();
-    STEST_EXPECT_FALSE(f.stubMotor.turnLeftCalled);
-    STEST_EXPECT_FALSE(f.stubMotor.moveBackwardCalled);
-    STEST_EXPECT_FALSE(f.stubMotor.stopMovingCalled);
+// [Positive] 청소 중 장애물 감지 시 청소기가 IDLE 모드로 전환된다
+STEST_REGISTER(Flow3_ObstacleAvoidance, Cleaning_ThenObstacle_CleanerBecomesIdle, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    sim.setLeftObstacle(false);
+    sim.orc->detectObstacle();
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  UC6 — Backward And Turn (5 cases)
-// ══════════════════════════════════════════════════════════════════════════════
-
-// [Positive] 왼쪽 비어있을 때 callLog 가 ["backward","turnLeft"] 이고 callCount 가 2 인지 확인
-STEST_REGISTER(UC6_System, UC6_BackwardAndTurn_LeftFree_ExactSequence, []() {
-    F f;
-    f.left->detectedValue = false;
-    f.orc->backwardAndTurn();
-    auto& log = f.stubMotor.callLog;
-    STEST_EXPECT_EQ(log.size(), (size_t)2);
-    STEST_EXPECT_EQ(log[0], std::string("backward"));
-    STEST_EXPECT_EQ(log[1], std::string("turnLeft"));
-    STEST_EXPECT_EQ(f.stubMotor.callCount, 2);
-});
-
-// [Positive] 왼쪽 막힘·오른쪽 비어있을 때 backward + turnRight 가 호출되는지 확인
-STEST_REGISTER(UC6_System, UC6_BackwardAndTurn_RightFree_BackwardThenRight, []() {
-    F f;
-    f.left->detectedValue  = true;
-    f.right->detectedValue = false;
-    f.orc->backwardAndTurn();
-    STEST_EXPECT_TRUE(f.stubMotor.moveBackwardCalled);
-    STEST_EXPECT_TRUE(f.stubMotor.turnRightCalled);
-});
-
-// [Negative] 양쪽 모두 막혔을 때 callLog 가 ["backward"] 이고 turn 이 없는지 확인 (fail-safe)
-STEST_REGISTER(UC6_System, UC6_BackwardAndTurn_BothBlocked_FailSafe, []() {
-    F f;
-    f.left->detectedValue  = true;
-    f.right->detectedValue = true;
-    f.orc->backwardAndTurn();
-    auto& log = f.stubMotor.callLog;
-    STEST_EXPECT_EQ(log.size(), (size_t)1);
-    STEST_EXPECT_EQ(log[0], std::string("backward"));
-    STEST_EXPECT_FALSE(f.stubMotor.turnLeftCalled);
-    STEST_EXPECT_FALSE(f.stubMotor.turnRightCalled);
-});
-
-// [Negative] backwardAndTurn() 호출 시 cleaner 가 전혀 호출되지 않는지 확인
-STEST_REGISTER(UC6_System, UC6_BackwardAndTurn_CleanerNotCalled, []() {
-    F f;
-    f.orc->backwardAndTurn();
-    STEST_EXPECT_EQ(f.stubCleaner.callCount, 0);
-});
-
-// [Negative] backwardAndTurn() 호출 시 display 출력이 없는지 확인
-STEST_REGISTER(UC6_System, UC6_BackwardAndTurn_NoDisplayOutput, []() {
-    F f;
-    f.orc->backwardAndTurn();
-    STEST_EXPECT_TRUE(f.out().empty());
+// [Negative] 장애물 회피 후 재청소 시 모터가 FORWARD 상태로 복귀한다
+STEST_REGISTER(Flow3_ObstacleAvoidance, Obstacle_ThenResumeCleaning_MotorReturnsForward, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(false);
+    sim.orc->detectObstacle();
+    STEST_EXPECT_TRUE(sim.motor.isTurningLeft());
+    sim.orc->performCleaning();
+    STEST_EXPECT_TRUE(sim.motor.isMovingForward());
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  UC7 — Perform Boost Cleaning (3 cases)
-//  CleanerController(ICleaner*) 생성자는 boostDurationMs=0 으로 설정되므로
-//  requestPowerUp() 직후 update() 가 true 를 반환해 루프가 즉시 종료된다.
+//  Flow 4 — Backward And Turn (5 cases)
+//  UC6 후진+회전 시나리오에서 모터 최종 상태와 청소기 무영향을 검증한다.
 // ══════════════════════════════════════════════════════════════════════════════
 
-// [Positive] NORMAL 상태에서 performBoostCleaning() 시 powerUp 이 호출되는지 확인
-STEST_REGISTER(UC7_System, UC7_PerformBoostCleaning_NormalState_PowerUp, []() {
-    F f;
-    f.orc->performBoostCleaning();
-    STEST_EXPECT_TRUE(f.stubCleaner.powerUpCalled);
+// [Positive] 왼쪽 열린 환경에서 backwardAndTurn 후 모터가 TURN_LEFT 상태가 된다
+STEST_REGISTER(Flow4_BackwardAndTurn, EnvLeftFree_MotorFinalStateTurnLeft, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(false);
+    sim.orc->backwardAndTurn();
+    STEST_EXPECT_TRUE(sim.motor.isTurningLeft());
 });
 
-// [Negative] boost cleaning 중 stopCleaning 이 호출되지 않는지 확인
-STEST_REGISTER(UC7_System, UC7_PerformBoostCleaning_DoesNotStopCleaning, []() {
-    F f;
-    f.orc->performBoostCleaning();
-    STEST_EXPECT_FALSE(f.stubCleaner.stopCleaningCalled);
+// [Positive] 오른쪽만 열린 환경에서 backwardAndTurn 후 모터가 TURN_RIGHT 상태가 된다
+STEST_REGISTER(Flow4_BackwardAndTurn, EnvRightFree_MotorFinalStateTurnRight, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(false);
+    sim.orc->backwardAndTurn();
+    STEST_EXPECT_TRUE(sim.motor.isTurningRight());
 });
 
-// [Negative] performBoostCleaning() 호출 시 모터가 동작하지 않는지 확인
-STEST_REGISTER(UC7_System, UC7_PerformBoostCleaning_MotorNotCalled, []() {
-    F f;
-    f.orc->performBoostCleaning();
-    STEST_EXPECT_EQ(f.stubMotor.callCount, 0);
+// [Positive] 장애물 감지 후 backwardAndTurn 시 모터가 BACKWARD 상태를 거친다
+STEST_REGISTER(Flow4_BackwardAndTurn, AfterObstacle_BackwardAndTurn_MotorMovesBackward, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(true);
+    sim.orc->detectObstacle();
+    sim.orc->backwardAndTurn();
+    STEST_EXPECT_TRUE(sim.motor.isMovingBackward());
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  UC8 — Power Off (4 cases)
-// ══════════════════════════════════════════════════════════════════════════════
-
-// [Positive] powerOff() 출력이 "[RVC] 시스템 종료 중...\n" 과 정확히 일치하는지 확인
-STEST_REGISTER(UC8_System, UC8_PowerOff_ExactOutputFormat, []() {
-    F f;
-    f.orc->powerOff();
-    STEST_EXPECT_EQ(f.out(), std::string("[RVC] 시스템 종료 중...\n"));
+// [Negative] 양방향 막힌 환경에서 backwardAndTurn 후 모터는 BACKWARD 상태(회전 없음)다
+STEST_REGISTER(Flow4_BackwardAndTurn, EnvBothBlocked_MotorStaysBackward_NoTurn, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(true);
+    sim.orc->backwardAndTurn();
+    STEST_EXPECT_TRUE(sim.motor.isMovingBackward());
+    STEST_EXPECT_FALSE(sim.motor.isTurningLeft());
+    STEST_EXPECT_FALSE(sim.motor.isTurningRight());
 });
 
-// [Positive] powerOff() 호출 시 motor.stopMoving 이 호출되는지 확인
-STEST_REGISTER(UC8_System, UC8_PowerOff_StopsMotor, []() {
-    F f;
-    f.orc->powerOff();
-    STEST_EXPECT_TRUE(f.stubMotor.stopMovingCalled);
-});
-
-// [Positive] powerOff() 호출 시 cleaner.stopCleaning 이 호출되는지 확인
-STEST_REGISTER(UC8_System, UC8_PowerOff_StopsCleaner, []() {
-    F f;
-    f.orc->powerOff();
-    STEST_EXPECT_TRUE(f.stubCleaner.stopCleaningCalled);
-});
-
-// [Negative] powerOff() 호출 시 startCleaning 이 호출되지 않는지 확인
-STEST_REGISTER(UC8_System, UC8_PowerOff_DoesNotStartCleaning, []() {
-    F f;
-    f.orc->powerOff();
-    STEST_EXPECT_FALSE(f.stubCleaner.startCleaningCalled);
+// [Negative] backwardAndTurn은 청소기 모드를 변경하지 않는다
+STEST_REGISTER(Flow4_BackwardAndTurn, BackwardAndTurn_CleanerModeUnchanged, []() {
+    RVCSystemSimulator sim;
+    sim.orc->backwardAndTurn();
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  UC9 — Notify Error (3 cases)
+//  Flow 5 — Boost Cleaning (5 cases)
+//  UC7 부스트 청소 시나리오에서 청소기 모드 전이와 종료 후 상태를 검증한다.
 // ══════════════════════════════════════════════════════════════════════════════
 
-// [Positive] MOTOR_ERROR 전달 시 출력이 "[ERROR] MOTOR_ERROR\n" 과 정확히 일치하는지 확인
-STEST_REGISTER(UC9_System, UC9_NotifyError_MotorError_ExactOutput, []() {
-    F f;
-    f.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
-    STEST_EXPECT_EQ(f.out(), std::string("[ERROR] MOTOR_ERROR\n"));
+// [Positive] 부스트 청소 요청 시 청소기가 BOOST 모드로 전환된다
+STEST_REGISTER(Flow5_BoostCleaning, Boost_CleanerEntersBoostMode, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performBoostCleaning();
+    STEST_EXPECT_TRUE(sim.cleaner.isBoost());
 });
 
-// [Positive] notifyError() 호출 시 stopMoving 과 stopCleaning 이 모두 호출되는지 확인
-STEST_REGISTER(UC9_System, UC9_NotifyError_StopsMotorAndCleaner, []() {
-    F f;
-    f.orc->notifyError(ErrorInfo(ErrorType::SENSOR_ERROR));
-    STEST_EXPECT_TRUE(f.stubMotor.stopMovingCalled);
-    STEST_EXPECT_TRUE(f.stubCleaner.stopCleaningCalled);
+// [Positive] NORMAL 청소 후 부스트 요청 시 청소기가 BOOST 모드로 업그레이드된다
+STEST_REGISTER(Flow5_BoostCleaning, Cleaning_ThenBoost_CleanerUpgradesToBoost, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    STEST_EXPECT_TRUE(sim.cleaner.isCleaning());
+    sim.orc->performBoostCleaning();
+    STEST_EXPECT_TRUE(sim.cleaner.isBoost());
 });
 
-// [Negative] notifyError() 출력에 "[RVC]" 가 없고 startCleaning 이 호출되지 않는지 확인
-STEST_REGISTER(UC9_System, UC9_NotifyError_NoRVCPrefixAndNoStartCleaning, []() {
-    F f;
-    f.orc->notifyError(ErrorInfo(ErrorType::CLEANER_ERROR));
-    STEST_EXPECT_NOT_CONTAINS(f.out(), "[RVC]");
-    STEST_EXPECT_FALSE(f.stubCleaner.startCleaningCalled);
+// [Positive] 부스트 청소 후 User가 전원을 끄면 청소기가 IDLE 모드로 복귀한다
+STEST_REGISTER(Flow5_BoostCleaning, Boost_ThenPressOff_CleanerReturnsToIdle, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performBoostCleaning();
+    STEST_EXPECT_TRUE(sim.cleaner.isBoost());
+    sim.pressOff();
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
+});
+
+// [Negative] 부스트 청소 중 모터는 STOPPED 상태를 유지한다
+STEST_REGISTER(Flow5_BoostCleaning, Boost_MotorRemainsStoppedDuringBoost, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performBoostCleaning();
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
+});
+
+// [Negative] 부스트 청소는 청소기를 IDLE로 전환하지 않는다
+STEST_REGISTER(Flow5_BoostCleaning, Boost_CleanerDoesNotBecomeIdle, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performBoostCleaning();
+    STEST_EXPECT_FALSE(sim.cleaner.isIdle());
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  Flow 6 — Error Handling (5 cases)
+//  UC9 오류 발생 시 하드웨어 안전 정지와 이후 시스템 상태를 검증한다.
+// ══════════════════════════════════════════════════════════════════════════════
+
+// [Positive] 오류 발생 시 모터가 STOPPED 상태로 전환된다
+STEST_REGISTER(Flow6_ErrorHandling, Error_MotorEntersStoppedState, []() {
+    RVCSystemSimulator sim;
+    sim.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
+});
+
+// [Positive] 청소 중 오류 발생 시 청소기가 IDLE 모드로 안전 정지한다
+STEST_REGISTER(Flow6_ErrorHandling, Cleaning_ThenError_CleanerSafeStop, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    sim.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
+});
+
+// [Positive] 오류 후 User가 전원을 끄면 모터와 청소기가 안전 상태를 유지한다
+STEST_REGISTER(Flow6_ErrorHandling, Error_ThenPressOff_HardwareRemainsInSafeState, []() {
+    RVCSystemSimulator sim;
+    sim.pressOn();
+    sim.orc->notifyError(ErrorInfo(ErrorType::SENSOR_ERROR));
+    sim.pressOff();
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
+});
+
+// [Negative] 오류 발생 후 청소기는 NORMAL이나 BOOST 모드가 되지 않는다
+STEST_REGISTER(Flow6_ErrorHandling, Error_CleanerDoesNotResumeCleaning, []() {
+    RVCSystemSimulator sim;
+    sim.orc->notifyError(ErrorInfo(ErrorType::CLEANER_ERROR));
+    STEST_EXPECT_FALSE(sim.cleaner.isCleaning());
+    STEST_EXPECT_FALSE(sim.cleaner.isBoost());
+});
+
+// [Negative] 오류 발생 후 모터는 FORWARD 상태가 되지 않는다
+STEST_REGISTER(Flow6_ErrorHandling, Error_MotorDoesNotMoveForward, []() {
+    RVCSystemSimulator sim;
+    sim.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
+    STEST_EXPECT_FALSE(sim.motor.isMovingForward());
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  Flow 7 — Complete Sessions (5 cases)
+//  SD의 전체 유스케이스 흐름을 시뮬레이션하여 최종 시스템 상태를 검증한다.
+// ══════════════════════════════════════════════════════════════════════════════
+
+// [Positive] UC1→UC3→UC8: 전원 켜기 → 장애물 회피(좌회전) → 전원 끄기 후 STOPPED/IDLE
+STEST_REGISTER(Flow7_CompleteSession, UC1_Avoid_UC8_FinalSafeState, []() {
+    RVCSystemSimulator sim;
+    sim.pressOn();
+    sim.setLeftObstacle(false);
+    sim.orc->detectObstacle();
+    STEST_EXPECT_TRUE(sim.motor.isTurningLeft());
+    sim.pressOff();
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
+});
+
+// [Positive] UC2→UC6→UC2: 청소 → 후진 회피 → 재청소 시 모터가 FORWARD로 복귀한다
+STEST_REGISTER(Flow7_CompleteSession, UC2_BackwardAvoid_UC2_MotorReturnsForward, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(true);
+    sim.orc->backwardAndTurn();
+    STEST_EXPECT_TRUE(sim.motor.isMovingBackward());
+    sim.orc->performCleaning();
+    STEST_EXPECT_TRUE(sim.motor.isMovingForward());
+    STEST_EXPECT_TRUE(sim.cleaner.isCleaning());
+});
+
+// [Positive] UC1→UC7→UC8: 전원 켜기 → 부스트 청소 → 전원 끄기 후 STOPPED/IDLE
+STEST_REGISTER(Flow7_CompleteSession, UC1_Boost_UC8_FinalSafeState, []() {
+    RVCSystemSimulator sim;
+    sim.pressOn();
+    sim.orc->performBoostCleaning();
+    STEST_EXPECT_TRUE(sim.cleaner.isBoost());
+    sim.pressOff();
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
+});
+
+// [Negative] UC9→UC8: 오류 발생 후 전원 끄기 시 안전 종료 메시지가 출력된다
+STEST_REGISTER(Flow7_CompleteSession, UC9_ThenUC8_SafeShutdownMessageDisplayed, []() {
+    RVCSystemSimulator sim;
+    sim.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
+    sim.pressOff();
+    STEST_EXPECT_CONTAINS(sim.displayOutput(), "[ERROR]");
+    STEST_EXPECT_CONTAINS(sim.displayOutput(), "[RVC] 시스템 종료 중...");
+});
+
+// [Negative] UC2→UC3→UC8: 청소 → 장애물 감지 → 전원 끄기 후 청소기가 IDLE 상태다
+STEST_REGISTER(Flow7_CompleteSession, UC2_Obstacle_UC8_CleanerIsIdle, []() {
+    RVCSystemSimulator sim;
+    sim.orc->performCleaning();
+    sim.setLeftObstacle(false);
+    sim.orc->detectObstacle();
+    sim.pressOff();
+    STEST_EXPECT_TRUE(sim.cleaner.isIdle());
+    STEST_EXPECT_TRUE(sim.motor.isStopped());
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
