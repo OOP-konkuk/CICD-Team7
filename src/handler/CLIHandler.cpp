@@ -9,5 +9,5 @@ void CLIHandler::display(const std::string& message) {
 
 // UC9: 에러 타입을 문자열로 변환해서 출력
 void CLIHandler::errDisplay(const ErrorInfo& error) {
-    std::cout << "[ERROR] " << errorTypeToString(error.getError()) << std::endl;
+    std::cout << "[ERROR] " << error.toString() << std::endl;
 }
