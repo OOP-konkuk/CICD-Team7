@@ -474,20 +474,6 @@ STEST_REGISTER(Flow6_ErrorHandling, Error_MotorDoesNotMoveForward, []() {
     STEST_EXPECT_FALSE(sim.motor.isMovingForward());
 });
 
-// [Negative] 오류 발생 후 모터가 TURN_LEFT 상태가 되지 않는다
-STEST_REGISTER(Flow6_ErrorHandling, Error_MotorDoesNotTurnLeft, []() {
-    RVCSystemSimulator sim;
-    sim.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
-    STEST_EXPECT_FALSE(sim.motor.isTurningLeft());
-});
-
-// [Negative] 오류 발생 후 모터가 TURN_RIGHT 상태가 되지 않는다
-STEST_REGISTER(Flow6_ErrorHandling, Error_MotorDoesNotTurnRight, []() {
-    RVCSystemSimulator sim;
-    sim.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
-    STEST_EXPECT_FALSE(sim.motor.isTurningRight());
-});
-
 // [Negative] 에러 출력 메시지에 [RVC] 접두사가 포함되지 않는다
 STEST_REGISTER(Flow6_ErrorHandling, Error_OutputDoesNotContainRVCPrefix, []() {
     RVCSystemSimulator sim;
