@@ -2,7 +2,7 @@
 
 class RVCPowerController {
 private:
-    bool isActive;
+    bool isActiveState;
 
 public:
     RVCPowerController();
@@ -10,5 +10,6 @@ public:
     void initialize();
     // UC8, UC9: 시스템 안전 종료 - isActive = false
     void shutdown();
-    bool getIsActive() const;
+    // 테스트 검증용 
+    bool isActive() const;
 };
