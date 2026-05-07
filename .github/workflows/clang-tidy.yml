@@ -24,7 +24,7 @@ jobs:
         run: |
           clang-tidy src/main.cpp \
             -p build \
-            -- -std=c++17 > clang-tidy-report.txt 2>&1 || true
+            > clang-tidy-report.txt 2>&1 || true
 
       - name: Count issues
         id: count_issues
