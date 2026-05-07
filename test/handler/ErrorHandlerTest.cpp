@@ -53,7 +53,7 @@ TEST(ErrorHandlerTest, ErrorPassesMotorErrorType) {
     OrchestratorStub stub;
     ErrorHandler handler(&stub);
     handler.error(ErrorType::MOTOR_ERROR);
-    EXPECT_EQ(stub.lastErrorType, ErrorType::MOTOR_ERROR);
+    EXPECT_EQ(stub.lastErrorMessage, "MOTOR_ERROR");
 }
 
 // error() 호출 시 SENSOR_ERROR 타입이 정확하게 전달되는지 확인
@@ -61,7 +61,7 @@ TEST(ErrorHandlerTest, ErrorPassesSensorErrorType) {
     OrchestratorStub stub;
     ErrorHandler handler(&stub);
     handler.error(ErrorType::SENSOR_ERROR);
-    EXPECT_EQ(stub.lastErrorType, ErrorType::SENSOR_ERROR);
+    EXPECT_EQ(stub.lastErrorMessage, "SENSOR_ERROR");
 }
 
 // error() 호출 시 CLEANER_ERROR 타입이 정확하게 전달되는지 확인
@@ -69,7 +69,7 @@ TEST(ErrorHandlerTest, ErrorPassesCleanerErrorType) {
     OrchestratorStub stub;
     ErrorHandler handler(&stub);
     handler.error(ErrorType::CLEANER_ERROR);
-    EXPECT_EQ(stub.lastErrorType, ErrorType::CLEANER_ERROR);
+    EXPECT_EQ(stub.lastErrorMessage, "CLEANER_ERROR");
 }
 
 // 인자 없이 error() 호출 시 기본값 UNKNOWN_ERROR가 전달되는지 확인
@@ -77,7 +77,7 @@ TEST(ErrorHandlerTest, ErrorDefaultTypeIsUnknown) {
     OrchestratorStub stub;
     ErrorHandler handler(&stub);
     handler.error();
-    EXPECT_EQ(stub.lastErrorType, ErrorType::UNKNOWN_ERROR);
+    EXPECT_EQ(stub.lastErrorMessage, "UNKNOWN_ERROR");
 }
 
 // error()를 1회 호출했을 때 notifyError도 정확히 1회 호출되는지 확인
@@ -98,10 +98,10 @@ TEST(ErrorHandlerTest, ErrorCalledMultipleTimesNotifyCalledMultipleTimes) {
 }
 
 // error()를 반복 호출 시 마지막 에러 타입으로 갱신되는지 확인
-TEST(ErrorHandlerTest, ErrorUpdatesLastErrorTypeOnRepeatCall) {
+TEST(ErrorHandlerTest, ErrorUpdatesLastErrorMessageOnRepeatCall) {
     OrchestratorStub stub;
     ErrorHandler handler(&stub);
     handler.error(ErrorType::MOTOR_ERROR);
     handler.error(ErrorType::SENSOR_ERROR);
-    EXPECT_EQ(stub.lastErrorType, ErrorType::SENSOR_ERROR);
+    EXPECT_EQ(stub.lastErrorMessage, "SENSOR_ERROR");
 }

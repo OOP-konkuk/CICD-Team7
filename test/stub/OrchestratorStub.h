@@ -11,18 +11,18 @@
 class OrchestratorStub : public IErrorNotifiable {
 public:
     bool notifyErrorCalled  = false;
-    ErrorType lastErrorType = ErrorType::NONE;
+    std::string lastErrorMessage = "NONE";
     int callCount           = 0;
 
     void notifyError(const ErrorInfo& error) override {
         notifyErrorCalled = true;
-        lastErrorType     = error.getError();
+        lastErrorMessage     = error.toString();
         ++callCount;
     }
 
     void reset() {
         notifyErrorCalled = false;
-        lastErrorType     = ErrorType::NONE;
+        lastErrorMessage     = "NONE";
         callCount         = 0;
     }
 };
