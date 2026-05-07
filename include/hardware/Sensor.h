@@ -9,5 +9,4 @@ public:
     virtual ~Sensor() = default;
 
     virtual bool requestStatus();
-    bool getIsDetected();
 };
