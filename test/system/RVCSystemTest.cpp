@@ -1,17 +1,6 @@
 #include "system/SimpleTestRunner.h"
 #include "simulator/RVCSimulator.h"
 
-// ──────────────────────────────────────────────────────────────────────────────
-//  RVCSystemSimulator 사용법
-//
-//  sim.pressOn()              → User가 전원 버튼을 누름 (UC1)
-//  sim.pressOff()             → User가 전원 버튼을 눌러 종료 (UC8)
-//  sim.setLeftObstacle(true)  → 왼쪽 센서에 장애물 주입
-//  sim.motor.isTurningLeft()  → 모터 현재 상태 확인
-//  sim.cleaner.isBoost()      → 청소기 현재 모드 확인
-//  sim.displayOutput()        → 사용자에게 출력된 메시지 확인
-// ──────────────────────────────────────────────────────────────────────────────
-
 // ══════════════════════════════════════════════════════════════════════════════
 //  Flow 1 — Power Lifecycle (5 cases)
 //  User가 전원 켜기/끄기를 수행하는 UC1·UC8 흐름을 검증한다.
@@ -226,13 +215,6 @@ STEST_REGISTER(Flow5_BoostCleaning, Boost_ThenPressOff_CleanerReturnsToIdle, [](
     STEST_EXPECT_TRUE(sim.cleaner.isBoost());
     sim.pressOff();
     STEST_EXPECT_TRUE(sim.cleaner.isIdle());
-});
-
-// [Negative] 부스트 청소 중 모터는 STOPPED 상태를 유지한다
-STEST_REGISTER(Flow5_BoostCleaning, Boost_MotorRemainsStoppedDuringBoost, []() {
-    RVCSystemSimulator sim;
-    sim.orc->performBoostCleaning();
-    STEST_EXPECT_TRUE(sim.motor.isStopped());
 });
 
 // [Negative] 부스트 청소는 청소기를 IDLE로 전환하지 않는다

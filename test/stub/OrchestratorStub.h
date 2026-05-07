@@ -1,6 +1,5 @@
 #pragma once
 #include "handler/IErrorNotifiable.h"
-#include "common/types.h"
 
 /**
  * [Stub] RVCOrchestrator 대역
