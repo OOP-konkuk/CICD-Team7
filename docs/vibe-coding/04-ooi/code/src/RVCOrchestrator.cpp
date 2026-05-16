@@ -54,8 +54,8 @@ void RVCOrchestrator::avoidAllObstacles() {
     cleaner.setMode(CleanMode::OFF);
     motor.setDirection(Direction::BACKWARD);
 
-    bool left = leftSensor.detect();
-    if (!left) {
+    bool leftBlocked = leftSensor.detect();
+    if (!leftBlocked) {
         motor.setDirection(Direction::LEFT);
     } else {
         motor.setDirection(Direction::RIGHT);

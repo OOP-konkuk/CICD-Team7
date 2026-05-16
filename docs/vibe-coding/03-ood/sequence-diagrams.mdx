@@ -92,15 +92,19 @@ FS -> Orch : onFrontDetected()
 activate Orch
 Orch -> LS : detect()
 activate LS
-LS --> Orch : false
+LS --> Orch : left
 deactivate LS
 Orch -> RS : detect()
 activate RS
-RS --> Orch : false
+RS --> Orch : right
 deactivate RS
 note right of Orch : [Not (left && right) → avoidFrontObstacle(left)]
 Orch -> Cleaner : setMode(OFF)
-Orch -> Motor : setDirection(LEFT)
+alt left == false
+  Orch -> Motor : setDirection(LEFT)
+else left == true
+  Orch -> Motor : setDirection(RIGHT)
+end
 Orch -> Motor : setDirection(FORWARD)
 Orch -> Cleaner : setMode(ON)
 deactivate Orch
@@ -142,19 +146,18 @@ Orch -> RS : detect()
 activate RS
 RS --> Orch : true
 deactivate RS
-note right of Orch
-  SSD-3: checkLeftSensor() = True
-          checkRightSensor() = True
-  → 전/좌/우 모두 막힘
-end note
+note right of Orch : [left && right → avoidAllObstacles()]
 Orch -> Cleaner : setMode(OFF)
 Orch -> Motor : setDirection(BACKWARD)
 Orch -> LS : detect()
 activate LS
-LS --> Orch : false
+LS --> Orch : leftBlocked
 deactivate LS
-note right of Orch : [후진 후 재확인 → LEFT open]
-Orch -> Motor : setDirection(LEFT)
+alt leftBlocked == false
+  Orch -> Motor : setDirection(LEFT)
+else leftBlocked == true
+  Orch -> Motor : setDirection(RIGHT)
+end
 Orch -> Motor : setDirection(FORWARD)
 Orch -> Cleaner : setMode(ON)
 deactivate Orch
@@ -184,6 +187,7 @@ actor ":FrontSensor" as FS
 actor ":LeftSensor" as LS
 actor ":RightSensor" as RS
 actor ":DustSensor" as DS
+participant ":MotorController" as Motor
 participant ":CleanerController" as Cleaner
 
 Clock -> Orch : onTick()
