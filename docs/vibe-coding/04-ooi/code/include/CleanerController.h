@@ -4,13 +4,15 @@
 
 class CleanerController {
 private:
+    static constexpr int DEFAULT_BOOST_DURATION_MS = 5 * 60 * 1000; // NFR-8: 5분
+
     CleanMode mode{CleanMode::OFF};
-    int boostDurationMs{5 * 60 * 1000};
+    int boostDurationMs{DEFAULT_BOOST_DURATION_MS};
     bool boostRunning{false};
     std::chrono::steady_clock::time_point boostEndTime{};
 
 public:
-    explicit CleanerController(int durationMs = 5 * 60 * 1000);
+    explicit CleanerController(int durationMs = DEFAULT_BOOST_DURATION_MS);
 
     void setMode(CleanMode m);
     CleanMode getMode() const;
