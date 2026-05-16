@@ -20,10 +20,11 @@ RVCControlSystem
 ─────────────────────────────────────────
 + onTick()                      : void
 + onFrontDetected()             : void
-+ onLeftDetected(val : bool)    : void
-+ onRightDetected(val : bool)   : void
 + onDustDetected(val : bool)    : void
 ```
+
+> **참고**: LeftSensor / RightSensor는 SSD-3에서 `:System`이 내부적으로 `checkLeftSensor()` / `checkRightSensor()`를 **self-call**하는 구조입니다.  
+> 외부 Actor가 System에 메시지를 보내는 것이 아니므로 System Operation으로 정의하지 않습니다.
 
 ---
 
@@ -158,9 +159,9 @@ deactivate Sys
 
 ## Traceability: Use Case → System Operation
 
-| Use Case | System Operation |
-|----------|-----------------|
-| UC-1: Perform Cleaning | `onTick()` |
-| UC-2: Avoid Front Obstacle | `onFrontDetected()` |
-| UC-3: Avoid All Obstacles | `onFrontDetected()` + `onLeftDetected()` + `onRightDetected()` |
-| UC-4: Power Up Cleaning | `onDustDetected()` |
+| Use Case | System Operation | 비고 |
+|----------|-----------------|------|
+| UC-1: Perform Cleaning | `onTick()` | DigitalClock → System |
+| UC-2: Avoid Front Obstacle | `onFrontDetected()` | FrontSensor → System (Interrupt) |
+| UC-3: Avoid All Obstacles | `onFrontDetected()` | System이 내부적으로 Left/Right Sensor를 직접 poll |
+| UC-4: Power Up Cleaning | `onDustDetected(val)` | DustSensor → System (Periodic) |
