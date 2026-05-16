@@ -171,7 +171,20 @@ DS -> Orch : onDustDetected(val: bool)
 activate Orch
 note right of Orch : val = true
 Orch -> Cleaner : setMode(UP)
-note right of Orch : [일정 시간 경과 — UC-4 Typical Course]
+note right of Cleaner : 내부 타이머 시작 (boostEndTime 설정)
+
+loop until update() == true
+  Orch -> Cleaner : update()
+  activate Cleaner
+  Cleaner --> Orch : false (아직 진행 중)
+  deactivate Cleaner
+end
+
+Orch -> Cleaner : update()
+activate Cleaner
+Cleaner --> Orch : true (boost 만료)
+deactivate Cleaner
+
 Orch -> Cleaner : setMode(ON)
 deactivate Orch
 @enduml

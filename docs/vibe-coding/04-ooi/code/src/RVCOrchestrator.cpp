@@ -54,9 +54,14 @@ void RVCOrchestrator::avoidAllObstacles() {
     cleaner.setMode(CleanMode::ON);
 }
 
-// SD-4: onDustDetected() — 파워업 후 ON 복귀
+// SD-4: onDustDetected() — 파워업 후 polling으로 만료 확인, ON 복귀
 void RVCOrchestrator::onDustDetected(bool val) {
     if (!val) return;
     cleaner.setMode(CleanMode::UP);
+
+    while (!cleaner.update()) {
+        // boost 만료까지 polling
+    }
+
     cleaner.setMode(CleanMode::ON);
 }

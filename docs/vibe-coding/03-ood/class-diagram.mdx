@@ -14,7 +14,7 @@
 | `Sensor` (abstract) | `Sensor` (abstract) | `# detected: bool`, `+ detect(): bool` | Domain Model + NFR-3 확장성 |
 | `FrontSensor` / `LeftSensor` / `RightSensor` / `DustSensor` | 동일 | `+ detect(): bool` 구체 구현 | Domain Model |
 | `MotorController` | `MotorController` | `setDirection()` / `getDirection()` 시그니처 확정 | Domain Model |
-| `CleanerController` | `CleanerController` | `setMode()` / `getMode()` 시그니처 확정 | Domain Model |
+| `CleanerController` | `CleanerController` | `setMode()` / `getMode()` + 타이머 속성(`boostDurationMs`, `boostRunning`, `boostEndTime`) + `update(): bool` 추가 | Domain Model + FR-5 "일정 시간" |
 | `DigitalClock` | `DigitalClock` | `tick(): void` | Domain Model |
 | `Direction` enum | `Direction` | FORWARD / BACKWARD / LEFT / RIGHT | Domain Model + I/O Events |
 | `CleanMode` enum | `CleanMode` | ON / OFF / UP | Domain Model + I/O Events |
@@ -73,8 +73,12 @@ class MotorController {
 
 class CleanerController {
   - mode : CleanMode
+  - boostDurationMs : int
+  - boostRunning : bool
+  - boostEndTime : time_point
   + setMode(mode : CleanMode) : void
   + getMode() : CleanMode
+  + update() : bool
 }
 
 class RVCOrchestrator {
