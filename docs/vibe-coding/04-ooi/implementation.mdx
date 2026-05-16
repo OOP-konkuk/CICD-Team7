@@ -18,25 +18,26 @@
 ## 파일 구조
 
 ```
-04-ooi/code/
-├── include/
-│   ├── types.h              ← Direction, CleanMode 열거형
-│   ├── Sensor.h             ← 추상 클래스
-│   ├── FrontSensor.h
-│   ├── LeftSensor.h
-│   ├── RightSensor.h
-│   ├── DustSensor.h
-│   ├── MotorController.h
-│   ├── CleanerController.h  ← 타이머 포함 (NFR-8: 5분)
-│   └── RVCOrchestrator.h   ← System Operations 선언
-└── src/
-    ├── FrontSensor.cpp
-    ├── LeftSensor.cpp
-    ├── RightSensor.cpp
-    ├── DustSensor.cpp
-    ├── MotorController.cpp
-    ├── CleanerController.cpp
-    └── RVCOrchestrator.cpp  ← System Operations 구현
+include/
+├── types.h              ← Direction, CleanMode 열거형
+├── Sensor.h             ← 추상 클래스
+├── FrontSensor.h
+├── LeftSensor.h
+├── RightSensor.h
+├── DustSensor.h
+├── MotorController.h
+├── CleanerController.h  ← 타이머 포함 (NFR-8: 5분)
+├── DigitalClock.h       ← 주기 설정 가능한 Clock (NFR-9)
+└── RVCOrchestrator.h    ← System Operations 선언
+src/
+├── FrontSensor.cpp
+├── LeftSensor.cpp
+├── RightSensor.cpp
+├── DustSensor.cpp
+├── MotorController.cpp
+├── CleanerController.cpp
+├── DigitalClock.cpp
+└── RVCOrchestrator.cpp  ← System Operations 구현
 ```
 
 ---
@@ -103,6 +104,35 @@ public:
     void setMode(CleanMode m);
     CleanMode getMode() const;
     bool update();
+};
+```
+
+### DigitalClock.h
+
+```cpp
+#pragma once
+#include <thread>
+#include <atomic>
+#include "RVCOrchestrator.h"
+
+class DigitalClock {
+private:
+    static constexpr int DEFAULT_INTERVAL_MS = 100;
+
+    RVCOrchestrator& orchestrator;
+    int intervalMs;
+    std::atomic<bool> running{false};
+    std::thread clockThread;
+
+    void run();
+
+public:
+    explicit DigitalClock(RVCOrchestrator& orch, int intervalMs = DEFAULT_INTERVAL_MS);
+    ~DigitalClock();
+
+    void start();
+    void stop();
+    void tick();  // 단일 수동 tick (테스트용)
 };
 ```
 
@@ -209,8 +239,8 @@ void RVCOrchestrator::avoidAllObstacles() {
     cleaner.setMode(CleanMode::OFF);
     motor.setDirection(Direction::BACKWARD);
 
-    bool left = leftSensor.detect();
-    if (!left) {
+    bool leftBlocked = leftSensor.detect();
+    if (!leftBlocked) {
         motor.setDirection(Direction::LEFT);
     } else {
         motor.setDirection(Direction::RIGHT);

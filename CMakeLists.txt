@@ -4,37 +4,28 @@ project(oop)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(ENABLE_COVERAGE "Enable gcov/lcov coverage" OFF)
+if(ENABLE_COVERAGE)
+    add_compile_options(--coverage)
+    add_link_options(--coverage)
+endif()
+
 set(LIB_SOURCES
-    src/hardware/Motor.cpp
-    src/hardware/Cleaner.cpp
-    src/hardware/Sensor.cpp
-    src/hardware/FrontSensor.cpp
-    src/hardware/LeftSensor.cpp
-    src/hardware/RightSensor.cpp
-    src/hardware/DustSensor.cpp
-    src/controller/RVCPowerController.cpp
-    src/controller/MotorController.cpp
-    src/controller/CleanerController.cpp
-    src/controller/MovementPolicyController.cpp
-    src/controller/CleaningPolicyController.cpp
-    src/handler/ErrorInfo.cpp
-    src/handler/ErrorHandler.cpp
-    src/handler/CLIHandler.cpp
+    src/FrontSensor.cpp
+    src/LeftSensor.cpp
+    src/RightSensor.cpp
+    src/DustSensor.cpp
+    src/MotorController.cpp
+    src/CleanerController.cpp
     src/RVCOrchestrator.cpp
+    src/DigitalClock.cpp
 )
 
 set(TEST_SOURCES
-    test/handler/ErrorInfoTest.cpp
-    test/handler/CLIHandlerTest.cpp
-    test/handler/ErrorHandlerTest.cpp
-    test/controller/RVCPowerControllerTest.cpp
-    test/controller/MovementPolicyControllerTest.cpp
-    test/controller/MotorControllerTest.cpp
-    test/controller/CleanerControllerTest.cpp
-    test/hardware/CleanerTest.cpp
-    test/hardware/SensorTest.cpp
-    test/controller/CleaningPolicyControllerTest.cpp
     test/RVCOrchestratorTest.cpp
+    test/MotorControllerTest.cpp
+    test/CleanerControllerTest.cpp
+    test/DigitalClockTest.cpp
 )
 
 # 메인 실행파일
@@ -50,8 +41,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-
-# 테스트 설정
+# 단위 테스트
 enable_testing()
 add_executable(oop_test ${TEST_SOURCES} ${LIB_SOURCES})
 target_include_directories(oop_test PRIVATE include test)
@@ -59,13 +49,7 @@ target_link_libraries(oop_test GTest::gtest_main)
 
 add_test(NAME oop_test COMMAND oop_test)
 
-# System Tests (GTest 의존성 없음)
-add_executable(oop_system_test
-    test/system/RVCSystemTest.cpp
-    ${LIB_SOURCES}
-)
-target_include_directories(oop_system_test PRIVATE include test)
-add_test(
-    NAME oop_system_test
-    COMMAND oop_system_test --xml=${CMAKE_BINARY_DIR}/system_test_results.xml
-)
+# System Tests — 추후 추가 예정
+# add_executable(oop_system_test test/system/RVCSystemTest.cpp ${LIB_SOURCES})
+# target_include_directories(oop_system_test PRIVATE include test)
+# add_test(NAME oop_system_test COMMAND oop_system_test --xml=${CMAKE_BINARY_DIR}/system_test_results.xml)

@@ -1,45 +1,28 @@
 #pragma once
-#include "handler/IErrorNotifiable.h"
-#include "handler/ErrorInfo.h"
-#include "handler/CLIHandler.h"
-#include "handler/ErrorHandler.h"
-#include "controller/RVCPowerController.h"
-#include "controller/MotorController.h"
-#include "controller/CleanerController.h"
-#include "controller/MovementPolicyController.h"
-#include "controller/CleaningPolicyController.h"
+#include "FrontSensor.h"
+#include "LeftSensor.h"
+#include "RightSensor.h"
+#include "DustSensor.h"
+#include "MotorController.h"
+#include "CleanerController.h"
 
-class RVCOrchestrator : public IErrorNotifiable {
+class RVCOrchestrator {
 private:
-    CLIHandler& cliHandler;
+    FrontSensor&       frontSensor;
+    LeftSensor&        leftSensor;
+    RightSensor&       rightSensor;
+    DustSensor&        dustSensor;
+    MotorController&   motor;
+    CleanerController& cleaner;
 
-    RVCPowerController* powerPtr;
-    MotorController* motorPtr;
-    CleanerController* cleanerPtr;
-    MovementPolicyController* movementPtr;
-    CleaningPolicyController* cleaningPolicyPtr;
-
-    ErrorHandler errorHandler;
-
-    bool systemRunning{false};
+    void onDustDetected();
+    void avoidFrontObstacle(bool leftBlocked);
+    void avoidAllObstacles();
 
 public:
+    RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
+                    DustSensor& ds, MotorController& mc, CleanerController& cc);
 
-    RVCOrchestrator(CLIHandler& cliHandler,
-                    RVCPowerController* power,
-                    MotorController* motor,
-                    CleanerController* cleaner,
-                    MovementPolicyController* movement,
-                    CleaningPolicyController* cleaningPolicy);
-
-    void powerOn();
-    void performCleaning();
-    void detectObstacle();
-    void turnLeft();
-    void turnRight();
-    void backwardAndTurn();
-    void performBoostCleaning();
-    void powerOff();
-    void notifyError(const ErrorInfo& error) override;
-  
+    void onTick();
+    void onFrontDetected();
 };

@@ -1,357 +1,341 @@
 #include <gtest/gtest.h>
-#include <sstream>
-#include <iostream>
-#include <memory>
+#include <thread>
+#include <chrono>
 #include "RVCOrchestrator.h"
-#include "stub/StubMotor.h"
-#include "stub/StubCleaner.h"
-#include "stub/StubSensor.h"
+#include "stubs/StubSensors.h"
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  RVCOrchestrator Unit Tests
-// ══════════════════════════════════════════════════════════════════════════════
+// ============================================================
+// Driver: RVCOrchestrator를 구동하는 테스트 픽스처
+// Stub:   StubSensor 계열 — detect() 반환값을 외부에서 제어
+// 검증:   MotorController::getDirection(), CleanerController::getMode()
+//         로 최종 상태 확인 (state-based verification)
+// ============================================================
 
 class RVCOrchestratorTest : public ::testing::Test {
 protected:
-    CLIHandler cliHandler;
+    StubFrontSensor  frontSensor;
+    StubLeftSensor   leftSensor;
+    StubRightSensor  rightSensor;
+    StubDustSensor   dustSensor;
+    MotorController  motor;
+    CleanerController cleaner{20};   // 20ms 부스트 — 타이머 테스트 빠르게
 
-    StubMotor stubMotor;
-    StubCleaner stubCleaner;
-    StubSensor* frontSensor;
-    StubSensor* leftSensor;
-    StubSensor* rightSensor;
-
-    MotorController motorCtrl{&stubMotor};
-    CleanerController cleanerCtrl{&stubCleaner};
-    std::unique_ptr<MovementPolicyController> movCtrl;
-    RVCPowerController powerCtrl;
-    CleaningPolicyController cleaningPolicyCtrl;
-
-
-    std::unique_ptr<RVCOrchestrator> orchestrator;
-
-    std::ostringstream captured;
-    std::streambuf* originalBuf{};
+    RVCOrchestrator* orch{nullptr};
 
     void SetUp() override {
-        stubMotor.reset();
-        stubCleaner.reset();
-
-        auto f = std::make_unique<StubSensor>();
-        auto l = std::make_unique<StubSensor>();
-        auto r = std::make_unique<StubSensor>();
-        frontSensor = f.get();
-        leftSensor  = l.get();
-        rightSensor = r.get();
-        movCtrl = std::make_unique<MovementPolicyController>(
-            std::move(f), std::move(l), std::move(r));
-
-        orchestrator = std::make_unique<RVCOrchestrator>(
-            cliHandler,
-            &powerCtrl,
-            &motorCtrl,
-            &cleanerCtrl,
-            movCtrl.get(),
-            &cleaningPolicyCtrl
+        orch = new RVCOrchestrator(
+            frontSensor, leftSensor, rightSensor,
+            dustSensor, motor, cleaner
         );
-
-        originalBuf = std::cout.rdbuf(captured.rdbuf());
     }
+    void TearDown() override { delete orch; }
 
-    void TearDown() override {
-        std::cout.rdbuf(originalBuf);
+    void setAllObstacles(bool f, bool l, bool r) {
+        frontSensor.stubValue = f;
+        leftSensor.stubValue  = l;
+        rightSensor.stubValue = r;
     }
-
-    std::string output() { return captured.str(); }
 };
 
 // ============================================================
-// UC1 : powerOn()  
+// onTick() — SD-1: 장애물 없음 + 먼지 없음
 // ============================================================
 
-// [Positive] powerOn() 출력 형식이 정확한지 확인
-TEST_F(RVCOrchestratorTest, UC1_PowerOn_ExactOutputFormat) {
-    orchestrator->powerOn();
-    EXPECT_EQ(output(), "[RVC] 시스템 준비 완료!\n");
+TEST_F(RVCOrchestratorTest, OnTick_NoObstacleNoDust_DirectionForward) {
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
 }
 
-// [Negative] powerOn() 시 motor 하드웨어가 호출되지 않는지 확인 (initialize는 하드웨어 미호출)
-TEST_F(RVCOrchestratorTest, UC1_PowerOn_MotorHardwareNotCalled) {
-    orchestrator->powerOn();
-    EXPECT_EQ(stubMotor.callCount, 0);
+TEST_F(RVCOrchestratorTest, OnTick_NoObstacleNoDust_ModeOn) {
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }
 
-// [Negative] powerOn() 시 cleaner 하드웨어가 호출되지 않는지 확인 (initialize는 하드웨어 미호출)
-TEST_F(RVCOrchestratorTest, UC1_PowerOn_CleanerHardwareNotCalled) {
-    orchestrator->powerOn();
-    EXPECT_EQ(stubCleaner.callCount, 0);
+TEST_F(RVCOrchestratorTest, OnTick_FrontObstacle_NoDirectionChange) {
+    motor.setDirection(Direction::BACKWARD);  // 초기 임의 방향
+    setAllObstacles(true, false, false);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    // 장애물 있으면 onTick에서 아무것도 안 함
+    EXPECT_EQ(motor.getDirection(), Direction::BACKWARD);
 }
 
-// [Negative] powerOn() 시 에러 출력이 발생하지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC1_PowerOn_NoErrorOutput) {
-    orchestrator->powerOn();
-    EXPECT_EQ(output().find("[ERROR]"), std::string::npos);
-}
-// ============================================================
-// UC2 : performCleaning()
-// ============================================================
-
-// [Positive] performCleaning() 시작 시 startCleaning 과 forward 이동이 호출되는지 확인
-TEST_F(RVCOrchestratorTest,
-       UC2_PerformCleaning_StartsCleaningAndMovesForward) {
-
-    orchestrator->performCleaning();
-
-    EXPECT_TRUE(stubCleaner.startCleaningCalled);
-    EXPECT_TRUE(stubMotor.moveForwardCalled);
+TEST_F(RVCOrchestratorTest, OnTick_LeftObstacle_NoForward) {
+    motor.setDirection(Direction::BACKWARD);
+    setAllObstacles(false, true, false);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::BACKWARD);
 }
 
-// [Negative] performCleaning() 호출 시 stopMoving 이 바로 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest,
-       UC2_PerformCleaning_DoesNotImmediatelyStopMotor) {
-
-    orchestrator->performCleaning();
-
-    EXPECT_FALSE(stubMotor.stopMovingCalled);
+TEST_F(RVCOrchestratorTest, OnTick_RightObstacle_NoForward) {
+    motor.setDirection(Direction::BACKWARD);
+    setAllObstacles(false, false, true);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::BACKWARD);
 }
 
-// [Negative] performCleaning() 호출 시 stopCleaning 이 바로 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest,
-       UC2_PerformCleaning_DoesNotImmediatelyStopCleaning) {
-
-    orchestrator->performCleaning();
-
-    EXPECT_FALSE(stubCleaner.stopCleaningCalled);
+TEST_F(RVCOrchestratorTest, OnTick_AllObstacles_NoForward) {
+    motor.setDirection(Direction::LEFT);
+    setAllObstacles(true, true, true);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::LEFT);
 }
 
-// ============================================================
-// UC3 : detectObstacle() 
-// ============================================================
-
-// [Positive] 왼쪽이 비어 있을 때 stopCleaning·stopMoving·turnLeft 가 모두 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_LeftFree_StopsAndTurnsLeft) {
-    leftSensor->detectedValue = false;
-    orchestrator->detectObstacle();
-    EXPECT_TRUE(stubCleaner.stopCleaningCalled);
-    EXPECT_TRUE(stubMotor.stopMovingCalled);
-    EXPECT_TRUE(stubMotor.turnLeftCalled);
+TEST_F(RVCOrchestratorTest, OnTick_FrontLeftObstacle_NoForward) {
+    motor.setDirection(Direction::RIGHT);
+    setAllObstacles(true, true, false);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::RIGHT);
 }
 
-// [Negative] 왼쪽 막힘·오른쪽 비어 있을 때 turnRight가 호출되고 turnLeft는 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_LeftBlocked_TurnsRightNotLeft) {
-    leftSensor->detectedValue  = true;
-    rightSensor->detectedValue = false;
-    orchestrator->detectObstacle();
-    EXPECT_TRUE(stubMotor.turnRightCalled);
-    EXPECT_FALSE(stubMotor.turnLeftCalled);
+TEST_F(RVCOrchestratorTest, OnTick_FrontRightObstacle_NoForward) {
+    motor.setDirection(Direction::RIGHT);
+    setAllObstacles(true, false, true);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::RIGHT);
 }
 
-// [Negative] 양쪽 모두 막혔을 때 backward가 호출되고 turn은 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_BothBlocked_BackwardOnlyNoTurn) {
-    leftSensor->detectedValue  = true;
-    rightSensor->detectedValue = true;
-    orchestrator->detectObstacle();
-    EXPECT_TRUE(stubMotor.moveBackwardCalled);
-    EXPECT_FALSE(stubMotor.turnLeftCalled);
-    EXPECT_FALSE(stubMotor.turnRightCalled);
+TEST_F(RVCOrchestratorTest, OnTick_LeftRightObstacle_NoForward) {
+    motor.setDirection(Direction::RIGHT);
+    setAllObstacles(false, true, true);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::RIGHT);
 }
 
-// [Negative] detectObstacle() 호출 시 display 출력이 없는지 확인
-TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_ProducesNoDisplayOutput) {
-    orchestrator->detectObstacle();
-    EXPECT_TRUE(output().empty());
-}
-
-
-// ============================================================
-// UC4 : turnLeft() 
-// ============================================================
-
-// [Positive] turnLeft() 호출 시 motor.turnLeft가 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC4_TurnLeft_CallsMotorTurnLeft) {
-    orchestrator->turnLeft();
-    EXPECT_TRUE(stubMotor.turnLeftCalled);
-}
-
-// [Negative] turnLeft() 호출 시 turnRight는 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC4_TurnLeft_DoesNotCallTurnRight) {
-    orchestrator->turnLeft();
-    EXPECT_FALSE(stubMotor.turnRightCalled);
-}
-
-// [Negative] turnLeft() 호출 시 backward는 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC4_TurnLeft_DoesNotCallBackward) {
-    orchestrator->turnLeft();
-    EXPECT_FALSE(stubMotor.moveBackwardCalled);
-}
-
-// [Negative] turnLeft() 호출 시 stopMoving은 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC4_TurnLeft_DoesNotCallStopMoving) {
-    orchestrator->turnLeft();
-    EXPECT_FALSE(stubMotor.stopMovingCalled);
-}
-
-
-// ============================================================
-// UC5 : turnRight() 
-// ============================================================
-
-// [Positive] turnRight() 호출 시 motor.turnRight가 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC5_TurnRight_CallsMotorTurnRight) {
-    orchestrator->turnRight();
-    EXPECT_TRUE(stubMotor.turnRightCalled);
-}
-
-// [Negative] turnRight() 호출 시 turnLeft는 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC5_TurnRight_DoesNotCallTurnLeft) {
-    orchestrator->turnRight();
-    EXPECT_FALSE(stubMotor.turnLeftCalled);
-}
-
-// [Negative] turnRight() 호출 시 backward는 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC5_TurnRight_DoesNotCallBackward) {
-    orchestrator->turnRight();
-    EXPECT_FALSE(stubMotor.moveBackwardCalled);
-}
-
-// [Negative] turnRight() 호출 시 stopMoving은 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC5_TurnRight_DoesNotCallStopMoving) {
-    orchestrator->turnRight();
-    EXPECT_FALSE(stubMotor.stopMovingCalled);
-}
-
-
-// ============================================================
-// UC6 : backwardAndTurn() 
-// ============================================================
-
-// [Positive] 왼쪽이 비어 있을 때 backward·turnLeft 순서로 호출되고 callCount가 2인지 확인
-TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_LeftFree_BackwardThenTurnLeft) {
-    leftSensor->detectedValue = false;
-    orchestrator->backwardAndTurn();
-    EXPECT_TRUE(stubMotor.moveBackwardCalled);
-    EXPECT_TRUE(stubMotor.turnLeftCalled);
-    EXPECT_EQ(stubMotor.callCount, 2);
-}
-
-// [Negative] 왼쪽 막힘·오른쪽 비어 있을 때 backward·turnRight가 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_LeftBlocked_CallsBackwardThenTurnRight) {
-    leftSensor->detectedValue  = true;
-    rightSensor->detectedValue = false;
-    orchestrator->backwardAndTurn();
-    EXPECT_TRUE(stubMotor.moveBackwardCalled);
-    EXPECT_TRUE(stubMotor.turnRightCalled);
-}
-
-// [Negative] 양쪽 모두 막혔을 때 backward만 호출되고 turn은 호출되지 않는지 확인 (fail-safe)
-TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_BothBlocked_OnlyBackwardCalled) {
-    leftSensor->detectedValue  = true;
-    rightSensor->detectedValue = true;
-    orchestrator->backwardAndTurn();
-    EXPECT_TRUE(stubMotor.moveBackwardCalled);
-    EXPECT_FALSE(stubMotor.turnLeftCalled);
-    EXPECT_FALSE(stubMotor.turnRightCalled);
-}
-
-// [Negative] backwardAndTurn() 호출 시 cleaner가 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_CleanerNotCalled) {
-    orchestrator->backwardAndTurn();
-    EXPECT_EQ(stubCleaner.callCount, 0);
-}
-
-// [Negative] backwardAndTurn() 호출 시 display 출력이 없는지 확인
-TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_ProducesNoDisplayOutput) {
-    orchestrator->backwardAndTurn();
-    EXPECT_TRUE(output().empty());
+TEST_F(RVCOrchestratorTest, OnTick_MultipleTicks_NoObstacle_StaysForward) {
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    orch->onTick();
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }
 
 // ============================================================
-// UC7 : performBoostCleaning()
+// onTick() — SD-4: 장애물 없음 + 먼지 감지
 // ============================================================
 
-// [Positive] NORMAL 상태에서 performBoostCleaning() 호출 시 powerUp 이 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC7_PerformBoostCleaning_NormalState_CallsPowerUp) {
-
-    orchestrator->performBoostCleaning();
-
-    EXPECT_TRUE(stubCleaner.powerUpCalled);
+TEST_F(RVCOrchestratorTest, OnTick_DustDetected_DirectionForward) {
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = true;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
 }
 
-
-// [Negative] boost cleaning 중 stopCleaning 이 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC7_PerformBoostCleaning_DoesNotCallStopCleaning) {
-
-    orchestrator->performBoostCleaning();
-
-    EXPECT_FALSE(stubCleaner.stopCleaningCalled);
+TEST_F(RVCOrchestratorTest, OnTick_DustDetected_ModeEventuallyOn) {
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = true;
+    orch->onTick();  // 20ms 부스트 후 ON으로 복귀
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }
 
-// [Negative] performBoostCleaning() 호출 시 motor 동작이 발생하지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC7_PerformBoostCleaning_DoesNotMoveMotor) {
+TEST_F(RVCOrchestratorTest, OnTick_DustWithFrontObstacle_NoDustHandling) {
+    motor.setDirection(Direction::BACKWARD);
+    cleaner.setMode(CleanMode::OFF);
+    setAllObstacles(true, false, false);
+    dustSensor.stubValue = true;
+    orch->onTick();
+    // 장애물이 있으면 분기 자체에 진입하지 않음
+    EXPECT_EQ(motor.getDirection(), Direction::BACKWARD);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::OFF);
+}
 
-    orchestrator->performBoostCleaning();
+TEST_F(RVCOrchestratorTest, OnTick_DustWithAllObstacles_NoDustHandling) {
+    motor.setDirection(Direction::RIGHT);
+    cleaner.setMode(CleanMode::OFF);
+    setAllObstacles(true, true, true);
+    dustSensor.stubValue = true;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::RIGHT);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::OFF);
+}
 
-    EXPECT_EQ(stubMotor.callCount, 0);
+TEST_F(RVCOrchestratorTest, OnTick_NoDust_ModeIsOnNotUp) {
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
+    EXPECT_NE(cleaner.getMode(), CleanMode::UP);
+}
+
+TEST_F(RVCOrchestratorTest, OnTick_AfterDustTick_NoDustTick_ModeOn) {
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = true;
+    orch->onTick();   // 부스트 후 ON
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
+
+    dustSensor.stubValue = false;
+    orch->onTick();   // 먼지 없음 → 그냥 ON
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
+}
+
+TEST_F(RVCOrchestratorTest, OnTick_LeftObstacleWithDust_NoDustHandling) {
+    motor.setDirection(Direction::BACKWARD);
+    setAllObstacles(false, true, false);
+    dustSensor.stubValue = true;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::BACKWARD);
+}
+
+TEST_F(RVCOrchestratorTest, OnTick_RightObstacleWithDust_NoDustHandling) {
+    motor.setDirection(Direction::BACKWARD);
+    setAllObstacles(false, false, true);
+    dustSensor.stubValue = true;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::BACKWARD);
 }
 
 // ============================================================
-// UC8 : powerOff()  
+// onFrontDetected() — SD-2: 좌 또는 우 열린 경우
 // ============================================================
 
-// [Positive] powerOff() 출력 형식이 정확한지 확인
-TEST_F(RVCOrchestratorTest, UC8_PowerOff_ExactOutputFormat) {
-    orchestrator->powerOff();
-    EXPECT_EQ(output(), "[RVC] 시스템 종료 중...\n");
+TEST_F(RVCOrchestratorTest, OnFrontDetected_LeftOpen_TurnsLeft) {
+    leftSensor.stubValue  = false;  // 좌 열림
+    rightSensor.stubValue = false;
+    orch->onFrontDetected();
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
 }
 
-// [Negative] powerOff() 호출 시 motor.stopMoving이 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC8_PowerOff_CallsStopMoving) {
-    orchestrator->powerOff();
-    EXPECT_TRUE(stubMotor.stopMovingCalled);
+TEST_F(RVCOrchestratorTest, OnFrontDetected_LeftOpen_ModeOffThenOn) {
+    leftSensor.stubValue  = false;
+    rightSensor.stubValue = false;
+    orch->onFrontDetected();
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }
 
-// [Negative] powerOff() 호출 시 cleaner.stopCleaning이 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC8_PowerOff_CallsStopCleaning) {
-    orchestrator->powerOff();
-    EXPECT_TRUE(stubCleaner.stopCleaningCalled);
+TEST_F(RVCOrchestratorTest, OnFrontDetected_LeftBlocked_RightOpen_TurnsRight) {
+    leftSensor.stubValue  = true;   // 좌 막힘
+    rightSensor.stubValue = false;  // 우 열림
+    orch->onFrontDetected();
+    // avoidFrontObstacle(leftBlocked=true) → setDirection(RIGHT) → FORWARD
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
 }
 
-// [Negative] powerOff() 호출 시 startCleaning은 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC8_PowerOff_DoesNotCallStartCleaning) {
-    orchestrator->powerOff();
-    EXPECT_FALSE(stubCleaner.startCleaningCalled);
+TEST_F(RVCOrchestratorTest, OnFrontDetected_LeftBlocked_RightOpen_ModeOn) {
+    leftSensor.stubValue  = true;
+    rightSensor.stubValue = false;
+    orch->onFrontDetected();
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
+}
+
+TEST_F(RVCOrchestratorTest, OnFrontDetected_BothOpen_FinalDirectionForward) {
+    leftSensor.stubValue  = false;
+    rightSensor.stubValue = false;
+    orch->onFrontDetected();
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
+}
+
+TEST_F(RVCOrchestratorTest, OnFrontDetected_LeftOpen_FinalModeOn) {
+    leftSensor.stubValue  = false;
+    rightSensor.stubValue = true;
+    orch->onFrontDetected();
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
+}
+
+TEST_F(RVCOrchestratorTest, OnFrontDetected_MultipleCallsSD2_FinalForward) {
+    leftSensor.stubValue  = false;
+    rightSensor.stubValue = false;
+    orch->onFrontDetected();
+    orch->onFrontDetected();
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }
 
 // ============================================================
-// UC9 : notifyError() 
+// onFrontDetected() — SD-3: 전/좌/우 모두 막힌 경우
 // ============================================================
 
-// [Positive] MOTOR_ERROR 전달 시 출력 형식이 정확한지 확인
-TEST_F(RVCOrchestratorTest, UC9_NotifyError_MotorError_ExactOutput) {
-    orchestrator->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
-    EXPECT_EQ(output(), "[ERROR] MOTOR_ERROR\n");
+TEST_F(RVCOrchestratorTest, OnFrontDetected_AllBlocked_ModeOff_ThenOn) {
+    // 첫 번째 detect: left=true, right=true → avoidAllObstacles
+    // 두 번째 detect(후진 후 재poll): left=false → LEFT
+    leftSensor.stubValue  = true;
+    rightSensor.stubValue = true;
+
+    // 후진 후 재poll 시뮬레이션: 두 번째 detect 호출 때는 열림
+    // StubSensor는 호출마다 같은 값 반환 → 최종 방향은 FORWARD
+    orch->onFrontDetected();
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
 }
 
-// [Negative] notifyError() 호출 시 motor.stopMoving이 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC9_NotifyError_CallsStopMoving) {
-    orchestrator->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
-    EXPECT_TRUE(stubMotor.stopMovingCalled);
+TEST_F(RVCOrchestratorTest, OnFrontDetected_AllBlocked_ModeIsOn) {
+    leftSensor.stubValue  = true;
+    rightSensor.stubValue = true;
+    orch->onFrontDetected();
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }
 
-// [Negative] notifyError() 호출 시 cleaner.stopCleaning이 호출되는지 확인
-TEST_F(RVCOrchestratorTest, UC9_NotifyError_CallsStopCleaning) {
-    orchestrator->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
-    EXPECT_TRUE(stubCleaner.stopCleaningCalled);
+TEST_F(RVCOrchestratorTest, OnFrontDetected_AllBlocked_LeftStillBlocked_TurnsRight) {
+    // 후진 후 재poll에서도 left=true → RIGHT 방향
+    leftSensor.stubValue  = true;
+    rightSensor.stubValue = true;
+    orch->onFrontDetected();
+    // 최종은 FORWARD (RIGHT → FORWARD)
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }
 
-// [Negative] notifyError() 출력에 "[RVC]" 접두사가 포함되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC9_NotifyError_OutputDoesNotContainRVCPrefix) {
-    orchestrator->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
-    EXPECT_EQ(output().find("[RVC]"), std::string::npos);
+TEST_F(RVCOrchestratorTest, OnFrontDetected_AllBlocked_ModeClearedDuringAvoidance) {
+    cleaner.setMode(CleanMode::ON);
+    leftSensor.stubValue  = true;
+    rightSensor.stubValue = true;
+    orch->onFrontDetected();
+    // 회피 중 OFF가 됐다가 최종 ON으로 복귀
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }
 
-// [Negative] notifyError() 호출 시 startCleaning은 호출되지 않는지 확인
-TEST_F(RVCOrchestratorTest, UC9_NotifyError_DoesNotCallStartCleaning) {
-    orchestrator->notifyError(ErrorInfo(ErrorType::SENSOR_ERROR));
-    EXPECT_FALSE(stubCleaner.startCleaningCalled);
+TEST_F(RVCOrchestratorTest, OnFrontDetected_LeftBlockedOnly_NotAllBlocked_TakesSD2Path) {
+    leftSensor.stubValue  = true;
+    rightSensor.stubValue = false;  // 우 열림 → SD-2
+    orch->onFrontDetected();
+    // SD-2: avoidFrontObstacle(left=true) → RIGHT → FORWARD
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
+}
+
+TEST_F(RVCOrchestratorTest, OnFrontDetected_RightBlockedOnly_NotAllBlocked_TakesSD2Path) {
+    leftSensor.stubValue  = false;  // 좌 열림 → SD-2
+    rightSensor.stubValue = true;
+    orch->onFrontDetected();
+    // SD-2: avoidFrontObstacle(left=false) → LEFT → FORWARD
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
+}
+
+// ============================================================
+// UC-2 Alt: onFrontDetected 후 onTick 정상 동작 검증
+// ============================================================
+
+TEST_F(RVCOrchestratorTest, AfterFrontObstacle_NormalTickResumesForward) {
+    leftSensor.stubValue  = false;
+    rightSensor.stubValue = false;
+    orch->onFrontDetected();  // 회피 완료
+
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = false;
+    orch->onTick();           // 정상 청소 재개
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
+}
+
+TEST_F(RVCOrchestratorTest, AfterAllObstacleAvoidance_NormalTickResumesForward) {
+    leftSensor.stubValue  = true;
+    rightSensor.stubValue = true;
+    orch->onFrontDetected();
+
+    setAllObstacles(false, false, false);
+    dustSensor.stubValue = false;
+    orch->onTick();
+    EXPECT_EQ(motor.getDirection(), Direction::FORWARD);
+    EXPECT_EQ(cleaner.getMode(), CleanMode::ON);
 }

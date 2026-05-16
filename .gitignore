@@ -427,9 +427,7 @@ Thumbs.db
 cmake-build-debug/
 cmake-build-release/
 
-# OOI 테스트 빌드 및 커버리지 산출물
-docs/vibe-coding/04-ooi/tests/ooi_build/
-docs/vibe-coding/04-ooi/tests/coverage_report/
-docs/vibe-coding/04-ooi/tests/coverage_filtered.info
+# 커버리지 산출물 (루트 기준)
+coverage_report/
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,vs
