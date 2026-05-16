@@ -22,8 +22,9 @@ RVCControlSystem
 + onFrontDetected() : void
 ```
 
-> **참고**: LeftSensor / RightSensor / DustSensor는 `:System`이 내부적으로 **self-call**로 poll하는 구조입니다.  
-> 외부 Actor가 System에 메시지를 보내는 것이 아니므로 System Operation으로 정의하지 않습니다.
+> **참고**: 모든 센서(FrontSensor, LeftSensor, RightSensor, DustSensor)는 System 외부 하드웨어로 취급합니다.  
+> System은 각 센서에 `detect()`를 명시적으로 요청하고 결과를 수신합니다.  
+> MotorController, CleanerController는 System 내부 소프트웨어이므로 SSD에 표시하지 않습니다.
 
 ---
 
@@ -37,22 +38,21 @@ title SSD-1: Perform Cleaning
 
 actor ":DigitalClock" as Clock
 boundary ":System" as Sys
+actor ":FrontSensor" as FS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+actor ":DustSensor" as DS
 
 Clock -> Sys : onTick()
 activate Sys
-Sys -> Sys : checkFrontSensor()
-note right : Front = False
-Sys -> Sys : checkLeftSensor()
-note right : Left = False
-Sys -> Sys : checkRightSensor()
-note right : Right = False
-Sys -> Sys : checkDustSensor()
-note right : Dust = False
-note right of Sys
-  [No obstacle, No dust]
-end note
-Sys --> Clock : setDirection(FORWARD)
-Sys --> Clock : setCleaning(ON)
+Sys -> FS : detect()
+FS --> Sys : false
+Sys -> LS : detect()
+LS --> Sys : false
+Sys -> RS : detect()
+RS --> Sys : false
+Sys -> DS : detect()
+DS --> Sys : false
 deactivate Sys
 @enduml
 ```
@@ -73,17 +73,15 @@ title SSD-2: Avoid Front Obstacle
 
 actor ":FrontSensor" as FS
 boundary ":System" as Sys
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
 
 FS -> Sys : onFrontDetected()
 activate Sys
-note right of Sys
-  [Front = True (Interrupt)]
-  Left or Right is open
-end note
-Sys --> FS : setCleaning(OFF)
-Sys --> FS : setDirection(LEFT or RIGHT)
-Sys --> FS : setDirection(FORWARD)
-Sys --> FS : setCleaning(ON)
+Sys -> LS : detect()
+LS --> Sys : false (or true)
+Sys -> RS : detect()
+RS --> Sys : false (or true)
 deactivate Sys
 @enduml
 ```
@@ -103,24 +101,18 @@ deactivate Sys
 title SSD-3: Avoid All Obstacles
 
 actor ":FrontSensor" as FS
+boundary ":System" as Sys
 actor ":LeftSensor" as LS
 actor ":RightSensor" as RS
-boundary ":System" as Sys
 
 FS -> Sys : onFrontDetected()
 activate Sys
-Sys -> Sys : checkLeftSensor()
-note right : Left = True (Periodic)
-Sys -> Sys : checkRightSensor()
-note right : Right = True (Periodic)
-note right of Sys
-  [All directions blocked]
-end note
-Sys --> FS : setCleaning(OFF)
-Sys --> FS : setDirection(BACKWARD)
-Sys --> FS : setDirection(LEFT or RIGHT)
-Sys --> FS : setDirection(FORWARD)
-Sys --> FS : setCleaning(ON)
+Sys -> LS : detect()
+LS --> Sys : true
+Sys -> RS : detect()
+RS --> Sys : true
+Sys -> LS : detect()
+LS --> Sys : true (or false)
 deactivate Sys
 @enduml
 ```
@@ -141,17 +133,21 @@ title SSD-4: Power Up Cleaning
 
 actor ":DigitalClock" as Clock
 boundary ":System" as Sys
+actor ":FrontSensor" as FS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+actor ":DustSensor" as DS
 
 Clock -> Sys : onTick()
 activate Sys
-Sys -> Sys : checkDustSensor()
-note right : Dust = True (Periodic)
-note right of Sys
-  [No obstacle, Dust detected]
-end note
-Sys --> Clock : setCleaning(UP)
-note right of Sys : [After 5min power-up duration]
-Sys --> Clock : setCleaning(ON)
+Sys -> FS : detect()
+FS --> Sys : false
+Sys -> LS : detect()
+LS --> Sys : false
+Sys -> RS : detect()
+RS --> Sys : false
+Sys -> DS : detect()
+DS --> Sys : true
 deactivate Sys
 @enduml
 ```
