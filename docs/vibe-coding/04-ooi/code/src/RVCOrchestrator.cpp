@@ -1,23 +1,29 @@
 #include "RVCOrchestrator.h"
 
 RVCOrchestrator::RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
-                                 MotorController& mc, CleanerController& cc)
-    : frontSensor(fs), leftSensor(ls), rightSensor(rs), motor(mc), cleaner(cc)
+                                 DustSensor& ds, MotorController& mc, CleanerController& cc)
+    : frontSensor(fs), leftSensor(ls), rightSensor(rs),
+      dustSensor(ds), motor(mc), cleaner(cc)
 {}
 
-// SD-1: onTick() — FrontSensor, LeftSensor, RightSensor 직접 호출
+// SD-1 / SD-4: onTick() — 모든 센서 poll, 상태에 따라 분기
 void RVCOrchestrator::onTick() {
     bool front = frontSensor.detect();
     bool left  = leftSensor.detect();
     bool right = rightSensor.detect();
+    bool dust  = dustSensor.detect();
 
     if (!front && !left && !right) {
         motor.setDirection(Direction::FORWARD);
         cleaner.setMode(CleanMode::ON);
+
+        if (dust) {
+            onDustDetected();  // SD-4: 먼지 감지 시 내부 처리
+        }
     }
 }
 
-// SD-2 / SD-3: onFrontDetected() — LeftSensor, RightSensor 직접 호출로 분기
+// SD-2 / SD-3: onFrontDetected() — 장애물 회피 분기
 void RVCOrchestrator::onFrontDetected() {
     bool left  = leftSensor.detect();
     bool right = rightSensor.detect();
@@ -61,8 +67,7 @@ void RVCOrchestrator::avoidAllObstacles() {
 }
 
 // SD-4: onDustDetected() — 파워업 후 polling으로 만료 확인, ON 복귀
-void RVCOrchestrator::onDustDetected(bool val) {
-    if (!val) return;
+void RVCOrchestrator::onDustDetected() {
     cleaner.setMode(CleanMode::UP);
 
     while (!cleaner.update()) {

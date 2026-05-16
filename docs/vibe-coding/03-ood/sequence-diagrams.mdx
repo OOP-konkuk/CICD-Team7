@@ -12,29 +12,30 @@ SSD와 SD는 1:1 대응합니다. `:System` 블랙박스 내부를 Domain Model�
 
 | SSD (OOA) | SD (OOD) | System Operation |
 |-----------|----------|-----------------|
-| SSD-1 | SD-1 | `onTick()` |
+| SSD-1 | SD-1 | `onTick()` — 장애물 없음, 먼지 없음 |
 | SSD-2 | SD-2 | `onFrontDetected()` — 좌/우 열린 경우 |
 | SSD-3 | SD-3 | `onFrontDetected()` — 전/좌/우 모두 막힌 경우 |
-| SSD-4 | SD-4 | `onDustDetected(val)` |
+| SSD-4 | SD-4 | `onTick()` — 장애물 없음, 먼지 감지 |
 
 ---
 
 ## SD-1: Perform Cleaning
 
-> **SSD-1 → SD-1**: `onTick()` 호출 시 `:System` 내부에서 FrontSensor 확인 후 전진/청소 명령.  
-> UC-1 Typical Course: Tick → 센서 확인(전/좌/우 False) → Forward → On
+> **SSD-1 → SD-1**: `onTick()` 호출 시 전 센서(Front/Left/Right/Dust) 확인.  
+> 장애물 없음 + 먼지 없음 → Forward + ON
 
 ### PlantUML Code
 
 ```plantuml
 @startuml SD1_PerformCleaning
-title SD-1: Perform Cleaning\n(based on SSD-1: onTick())
+title SD-1: Perform Cleaning\n(based on SSD-1: onTick(), no obstacle, no dust)
 
 participant ":DigitalClock" as Clock
 participant ":RVCOrchestrator" as Orch
 participant ":FrontSensor" as FS
 participant ":LeftSensor" as LS
 participant ":RightSensor" as RS
+participant ":DustSensor" as DS
 participant ":MotorController" as Motor
 participant ":CleanerController" as Cleaner
 
@@ -52,7 +53,11 @@ Orch -> RS : detect()
 activate RS
 RS --> Orch : false
 deactivate RS
-note right of Orch : [No obstacle — proceed forward]
+Orch -> DS : detect()
+activate DS
+DS --> Orch : false
+deactivate DS
+note right of Orch : [No obstacle, No dust → proceed]
 Orch -> Motor : setDirection(FORWARD)
 Orch -> Cleaner : setMode(ON)
 deactivate Orch
@@ -154,38 +159,56 @@ deactivate Orch
 
 ## SD-4: Power Up Cleaning
 
-> **SSD-4 → SD-4**: `onDustDetected()` 호출 시 청소 파워업 후 일정 시간 경과 후 ON 복귀.  
-> UC-4 Typical Course: Dust Sensor(True, Periodic) → Clean Up → 일정 시간 후 On.
+> **SSD-4 → SD-4**: `onTick()` 내부에서 DustSensor poll 결과가 true인 경우 파워업 처리.  
+> `onDustDetected()`는 private 내부 메서드로 호출됨.
 
 ### PlantUML Code
 
 ```plantuml
 @startuml SD4_PowerUpCleaning
-title SD-4: Power Up Cleaning\n(based on SSD-4: onDustDetected())
+title SD-4: Power Up Cleaning\n(based on SSD-4: onTick(), dust detected)
 
-participant ":DustSensor\n(Periodic)" as DS
+participant ":DigitalClock" as Clock
 participant ":RVCOrchestrator" as Orch
+participant ":FrontSensor" as FS
+participant ":LeftSensor" as LS
+participant ":RightSensor" as RS
+participant ":DustSensor" as DS
 participant ":CleanerController" as Cleaner
 
-DS -> Orch : onDustDetected(val: bool)
+Clock -> Orch : onTick()
 activate Orch
-note right of Orch : val = true
+Orch -> FS : detect()
+activate FS
+FS --> Orch : false
+deactivate FS
+Orch -> LS : detect()
+activate LS
+LS --> Orch : false
+deactivate LS
+Orch -> RS : detect()
+activate RS
+RS --> Orch : false
+deactivate RS
+Orch -> DS : detect()
+activate DS
+DS --> Orch : true
+deactivate DS
+note right of Orch : [Dust detected → onDustDetected()]
+Orch -> Orch : onDustDetected()
+activate Orch
 Orch -> Cleaner : setMode(UP)
-note right of Cleaner : 내부 타이머 시작 (boostEndTime 설정)
+note right of Cleaner : 내부 타이머 시작 (5분)
 
 loop until update() == true
   Orch -> Cleaner : update()
   activate Cleaner
-  Cleaner --> Orch : false (아직 진행 중)
+  Cleaner --> Orch : false
   deactivate Cleaner
 end
 
-Orch -> Cleaner : update()
-activate Cleaner
-Cleaner --> Orch : true (boost 만료)
-deactivate Cleaner
-
 Orch -> Cleaner : setMode(ON)
+deactivate Orch
 deactivate Orch
 @enduml
 ```
@@ -200,7 +223,7 @@ deactivate Orch
 
 | SSD (OOA) | SD (OOD) | `:System` 블랙박스 분해 |
 |-----------|----------|------------------------|
-| SSD-1: `onTick()` | SD-1 | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, MotorController, CleanerController |
+| SSD-1: `onTick()` no dust | SD-1 | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, MotorController, CleanerController |
 | SSD-2: `onFrontDetected()` | SD-2 | RVCOrchestrator, LeftSensor, MotorController, CleanerController |
 | SSD-3: `onFrontDetected()` all blocked | SD-3 | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController |
-| SSD-4: `onDustDetected()` | SD-4 | RVCOrchestrator, CleanerController |
+| SSD-4: `onTick()` dust detected | SD-4 | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, CleanerController |

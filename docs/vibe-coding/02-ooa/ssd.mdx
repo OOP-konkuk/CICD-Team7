@@ -18,12 +18,11 @@ SSD에서 도출된 시스템 메시지는 **System Operations(System Interface)
 <<Interface>>
 RVCControlSystem
 ─────────────────────────────────────────
-+ onTick()                      : void
-+ onFrontDetected()             : void
-+ onDustDetected(val : bool)    : void
++ onTick()          : void
++ onFrontDetected() : void
 ```
 
-> **참고**: LeftSensor / RightSensor는 SSD-3에서 `:System`이 내부적으로 `checkLeftSensor()` / `checkRightSensor()`를 **self-call**하는 구조입니다.  
+> **참고**: LeftSensor / RightSensor / DustSensor는 `:System`이 내부적으로 **self-call**로 poll하는 구조입니다.  
 > 외부 Actor가 System에 메시지를 보내는 것이 아니므로 System Operation으로 정의하지 않습니다.
 
 ---
@@ -135,18 +134,19 @@ deactivate Sys
 @startuml SSD4_PowerUpCleaning
 title SSD-4: Power Up Cleaning
 
-actor ":DustSensor" as DS
+actor ":DigitalClock" as Clock
 boundary ":System" as Sys
 
-DS -> Sys : onDustDetected()
+Clock -> Sys : onTick()
 activate Sys
+Sys -> Sys : checkDustSensor()
+note right : Dust = True (Periodic)
 note right of Sys
-  [Dust = True (Periodic)]
-  RVC is cleaning
+  [No obstacle, Dust detected]
 end note
-Sys --> DS : setCleaning(UP)
-note right of Sys : [After power-up duration]
-Sys --> DS : setCleaning(ON)
+Sys --> Clock : setCleaning(UP)
+note right of Sys : [After 5min power-up duration]
+Sys --> Clock : setCleaning(ON)
 deactivate Sys
 @enduml
 ```
@@ -164,4 +164,4 @@ deactivate Sys
 | UC-1: Perform Cleaning | `onTick()` | DigitalClock → System |
 | UC-2: Avoid Front Obstacle | `onFrontDetected()` | FrontSensor → System (Interrupt) |
 | UC-3: Avoid All Obstacles | `onFrontDetected()` | System이 내부적으로 Left/Right Sensor를 직접 poll |
-| UC-4: Power Up Cleaning | `onDustDetected(val)` | DustSensor → System (Periodic) |
+| UC-4: Power Up Cleaning | `onTick()` | System이 onTick() 내부에서 DustSensor를 직접 poll |
