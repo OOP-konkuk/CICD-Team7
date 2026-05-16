@@ -15,10 +15,10 @@ void RVCOrchestrator::onTick() {
 
     if (!front && !left && !right) {
         motor.setDirection(Direction::FORWARD);
-        cleaner.setMode(CleanMode::ON);
-
         if (dust) {
-            onDustDetected();  // SD-4: 먼지 감지 시 내부 처리
+            onDustDetected();          // SD-4: UP → polling → ON
+        } else {
+            cleaner.setMode(CleanMode::ON);  // SD-1: 먼지 없으면 ON
         }
     }
 }

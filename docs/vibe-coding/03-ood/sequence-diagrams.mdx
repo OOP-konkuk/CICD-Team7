@@ -199,6 +199,7 @@ Orch -> DS : detect()
 activate DS
 DS --> Orch : true
 deactivate DS
+Orch -> Motor : setDirection(FORWARD)
 note right of Orch : [Dust detected → onDustDetected()]
 Orch -> Orch : onDustDetected()
 activate Orch
@@ -229,6 +230,6 @@ deactivate Orch
 | SSD (OOA) | SD (OOD) | `:System` 블랙박스 분해 |
 |-----------|----------|------------------------|
 | SSD-1: `onTick()` no dust | SD-1 | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, MotorController, CleanerController |
-| SSD-2: `onFrontDetected()` | SD-2 | RVCOrchestrator, LeftSensor, MotorController, CleanerController |
+| SSD-2: `onFrontDetected()` | SD-2 | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController |
 | SSD-3: `onFrontDetected()` all blocked | SD-3 | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController |
 | SSD-4: `onTick()` dust detected | SD-4 | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, CleanerController |
