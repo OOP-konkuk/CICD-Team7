@@ -29,18 +29,17 @@ void RVCOrchestrator::onFrontDetected() {
     bool right = rightSensor.detect();
 
     if (left && right) {
-        avoidAllObstacles();   // SD-3: 전/좌/우 모두 막힘
+        avoidAllObstacles();        // SD-3: 전/좌/우 모두 막힘
     } else {
-        avoidFrontObstacle();  // SD-2: 좌 또는 우 열림
+        avoidFrontObstacle(left);   // SD-2: 이미 읽은 left 값 전달 (double poll 방지)
     }
 }
 
 // SD-2: 청소 중단 → 열린 방향 회전 → 전진 → 청소 재개
-void RVCOrchestrator::avoidFrontObstacle() {
+void RVCOrchestrator::avoidFrontObstacle(bool leftBlocked) {
     cleaner.setMode(CleanMode::OFF);
 
-    bool left = leftSensor.detect();
-    if (!left) {
+    if (!leftBlocked) {
         motor.setDirection(Direction::LEFT);
     } else {
         motor.setDirection(Direction::RIGHT);

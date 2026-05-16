@@ -16,7 +16,7 @@ private:
     CleanerController& cleaner;
 
     void onDustDetected();
-    void avoidFrontObstacle();
+    void avoidFrontObstacle(bool leftBlocked);
     void avoidAllObstacles();
 
 public:

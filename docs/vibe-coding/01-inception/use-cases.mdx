@@ -12,7 +12,7 @@
 | FR-1, FR-2 | RVC가 바닥을 자동으로 청소하며 직진 이동한다 | UC-1: Perform Cleaning | Hidden |
 | FR-3 | 전방 장애물 감지 시 회피 후 청소 재개 | UC-2: Avoid Front Obstacle | Evident |
 | FR-4 | 전/좌/우 모두 장애물 시 후진 후 회피 | UC-3: Avoid All Obstacles | Evident |
-| FR-5 | 먼지 감지 시 청소 파워업 | UC-4: Power Up Cleaning | Evident |
+| FR-5 | 먼지 감지 시 청소 파워업 | UC-4: Power Up Cleaning | Hidden |
 
 ---
 
@@ -68,11 +68,11 @@
 | Field | Content |
 |-------|---------|
 | **Use Case** | UC-4: Power Up Cleaning |
-| **Actors** | Dust Sensor (Periodic) |
-| **Type** | Primary, Evident |
-| **Overview** | 먼지 감지 시 5분 동안 청소 파워를 높인다 |
-| **Pre-Requisites** | RVC가 청소 중임 |
-| **Typical Courses of Events** | 1. Dust Sensor가 먼지 감지 (True, Periodic) <br/> 2. Clean: Up 명령 (파워업) <br/> 3. 5분 경과 후 Clean: On으로 복귀 |
+| **Actors** | Digital Clock (Hidden) |
+| **Type** | Primary, Hidden |
+| **Overview** | Tick 신호 처리 중 먼지가 감지되면 5분 동안 청소 파워를 높인다 |
+| **Pre-Requisites** | RVC가 청소 중이며 장애물 없음 |
+| **Typical Courses of Events** | 1. Digital Clock Tick 발생 <br/> 2. Dust Sensor 상태 확인 → True <br/> 3. Clean: Up 명령 (파워업) <br/> 4. 5분 경과 후 Clean: On으로 복귀 |
 | **Alternative Courses of Events** | 없음 |
 | **Exceptional Courses of Events** | 없음 |
 

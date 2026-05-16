@@ -40,11 +40,16 @@ boundary ":System" as Sys
 
 Clock -> Sys : onTick()
 activate Sys
+Sys -> Sys : checkFrontSensor()
+note right : Front = False
+Sys -> Sys : checkLeftSensor()
+note right : Left = False
+Sys -> Sys : checkRightSensor()
+note right : Right = False
+Sys -> Sys : checkDustSensor()
+note right : Dust = False
 note right of Sys
-  [No obstacle detected]
-  Front = False
-  Left = False
-  Right = False
+  [No obstacle, No dust]
 end note
 Sys --> Clock : setDirection(FORWARD)
 Sys --> Clock : setCleaning(ON)
