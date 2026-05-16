@@ -30,12 +30,12 @@ SSD와 SD는 1:1 대응합니다. `:System` 블랙박스 내부를 Domain Model�
 @startuml SD1_PerformCleaning
 title SD-1: Perform Cleaning\n(based on SSD-1: onTick(), no obstacle, no dust)
 
-participant ":DigitalClock" as Clock
+actor ":DigitalClock" as Clock
 participant ":RVCOrchestrator" as Orch
-participant ":FrontSensor" as FS
-participant ":LeftSensor" as LS
-participant ":RightSensor" as RS
-participant ":DustSensor" as DS
+actor ":FrontSensor" as FS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+actor ":DustSensor" as DS
 participant ":MotorController" as Motor
 participant ":CleanerController" as Cleaner
 
@@ -81,10 +81,10 @@ deactivate Orch
 @startuml SD2_AvoidFrontObstacle
 title SD-2: Avoid Front Obstacle\n(based on SSD-2: onFrontDetected())
 
-participant ":FrontSensor\n(Interrupt)" as FS
+actor ":FrontSensor\n(Interrupt)" as FS
 participant ":RVCOrchestrator" as Orch
-participant ":LeftSensor" as LS
-participant ":RightSensor" as RS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
 participant ":MotorController" as Motor
 participant ":CleanerController" as Cleaner
 
@@ -125,10 +125,10 @@ deactivate Orch
 @startuml SD3_AvoidAllObstacles
 title SD-3: Avoid All Obstacles\n(based on SSD-3: onFrontDetected(), all blocked)
 
-participant ":FrontSensor\n(Interrupt)" as FS
+actor ":FrontSensor\n(Interrupt)" as FS
 participant ":RVCOrchestrator" as Orch
-participant ":LeftSensor\n(Periodic)" as LS
-participant ":RightSensor\n(Periodic)" as RS
+actor ":LeftSensor\n(Periodic)" as LS
+actor ":RightSensor\n(Periodic)" as RS
 participant ":MotorController" as Motor
 participant ":CleanerController" as Cleaner
 
@@ -173,12 +173,12 @@ deactivate Orch
 @startuml SD4_PowerUpCleaning
 title SD-4: Power Up Cleaning\n(based on SSD-4: onTick(), dust detected)
 
-participant ":DigitalClock" as Clock
+actor ":DigitalClock" as Clock
 participant ":RVCOrchestrator" as Orch
-participant ":FrontSensor" as FS
-participant ":LeftSensor" as LS
-participant ":RightSensor" as RS
-participant ":DustSensor" as DS
+actor ":FrontSensor" as FS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+actor ":DustSensor" as DS
 participant ":CleanerController" as Cleaner
 
 Clock -> Orch : onTick()
