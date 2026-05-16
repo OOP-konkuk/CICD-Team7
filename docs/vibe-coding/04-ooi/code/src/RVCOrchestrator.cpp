@@ -1,9 +1,8 @@
 #include "RVCOrchestrator.h"
 
 RVCOrchestrator::RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
-                                 DustSensor& ds, MotorController& mc, CleanerController& cc)
-    : frontSensor(fs), leftSensor(ls), rightSensor(rs),
-      dustSensor(ds), motor(mc), cleaner(cc)
+                                 MotorController& mc, CleanerController& cc)
+    : frontSensor(fs), leftSensor(ls), rightSensor(rs), motor(mc), cleaner(cc)
 {}
 
 // SD-1: onTick() — FrontSensor, LeftSensor, RightSensor 직접 호출
@@ -45,11 +44,18 @@ void RVCOrchestrator::avoidFrontObstacle() {
     cleaner.setMode(CleanMode::ON);
 }
 
-// SD-3: 청소 중단 → 후진 → 방향 전환 → 전진 → 청소 재개
+// SD-3: 청소 중단 → 후진 → 열린 방향 회전 → 전진 → 청소 재개
 void RVCOrchestrator::avoidAllObstacles() {
     cleaner.setMode(CleanMode::OFF);
     motor.setDirection(Direction::BACKWARD);
-    motor.setDirection(Direction::LEFT);
+
+    bool left = leftSensor.detect();
+    if (!left) {
+        motor.setDirection(Direction::LEFT);
+    } else {
+        motor.setDirection(Direction::RIGHT);
+    }
+
     motor.setDirection(Direction::FORWARD);
     cleaner.setMode(CleanMode::ON);
 }

@@ -97,7 +97,6 @@ Sensor <|-- DustSensor
 RVCOrchestrator "1" --> "1" FrontSensor        : reads >
 RVCOrchestrator "1" --> "1" LeftSensor         : reads >
 RVCOrchestrator "1" --> "1" RightSensor        : reads >
-RVCOrchestrator "1" --> "1" DustSensor         : reads >
 RVCOrchestrator "1" --> "1" DigitalClock       : listens >
 RVCOrchestrator "1" --> "1" MotorController    : controls >
 RVCOrchestrator "1" --> "1" CleanerController  : controls >
@@ -120,7 +119,7 @@ CleanerController ..> CleanMode  : uses
 | 관계 | From | To | 도출 근거 |
 |------|------|----|-----------|
 | Generalization | FrontSensor / LeftSensor / RightSensor / DustSensor | Sensor | Domain Model + NFR-3 확장성 |
-| Association (reads) | RVCOrchestrator | FrontSensor / LeftSensor / RightSensor / DustSensor | SD-1~3: detect() 직접 호출 |
+| Association (reads) | RVCOrchestrator | FrontSensor / LeftSensor / RightSensor | SD-1~3: detect() 직접 호출 |
 | Association (listens) | RVCOrchestrator | DigitalClock | UC-1 Actor: Digital Clock |
 | Association (controls) | RVCOrchestrator | MotorController | Domain Model — 방향 제어 위임 |
 | Association (controls) | RVCOrchestrator | CleanerController | Domain Model — 청소 제어 위임 |

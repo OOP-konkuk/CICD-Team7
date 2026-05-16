@@ -2,7 +2,6 @@
 #include "FrontSensor.h"
 #include "LeftSensor.h"
 #include "RightSensor.h"
-#include "DustSensor.h"
 #include "MotorController.h"
 #include "CleanerController.h"
 
@@ -11,7 +10,6 @@ private:
     FrontSensor&       frontSensor;
     LeftSensor&        leftSensor;
     RightSensor&       rightSensor;
-    DustSensor&        dustSensor;
     MotorController&   motor;
     CleanerController& cleaner;
 
@@ -20,7 +18,7 @@ private:
 
 public:
     RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
-                    DustSensor& ds, MotorController& mc, CleanerController& cc);
+                    MotorController& mc, CleanerController& cc);
 
     void onTick();
     void onFrontDetected();
