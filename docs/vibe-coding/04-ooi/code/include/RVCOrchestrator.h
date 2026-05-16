@@ -9,25 +9,20 @@
 class RVCOrchestrator {
 private:
     FrontSensor&       frontSensor;
+    LeftSensor&        leftSensor;
+    RightSensor&       rightSensor;
     DustSensor&        dustSensor;
     MotorController&   motor;
     CleanerController& cleaner;
-
-    // Cached periodic sensor states (updated via onLeftDetected / onRightDetected)
-    bool leftDetected{false};
-    bool rightDetected{false};
 
     void avoidFrontObstacle();
     void avoidAllObstacles();
 
 public:
-    RVCOrchestrator(FrontSensor& fs, DustSensor& ds,
-                    MotorController& mc, CleanerController& cc);
+    RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
+                    DustSensor& ds, MotorController& mc, CleanerController& cc);
 
-    // System Operations (from OOA SSD)
     void onTick();
     void onFrontDetected();
-    void onLeftDetected(bool val);
-    void onRightDetected(bool val);
     void onDustDetected(bool val);
 };

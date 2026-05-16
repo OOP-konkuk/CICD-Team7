@@ -1,19 +1,16 @@
 # Implementation (OOI) — RVC Control SW
 
 > **Phase**: OOI in the 1st Elaboration  
-> **Input**: Class Diagram (03-ood/class-diagram.mdx) + Sequence Diagrams (03-ood/sequence-diagrams.mdx)  
+> **Input**: `03-ood/class-diagram.mdx` + `03-ood/sequence-diagrams.mdx`  
 > **Output**: C++ 구현 코드 (System Operations)
 
 ---
 
 ## Overview
 
-OOD의 Class Diagram → Skeleton Code 생성 후,  
-Sequence Diagram의 메시지 흐름을 힌트로 각 메서드를 구현합니다.
-
 | OOD Artifact | OOI 결과 |
 |--------------|---------|
-| Class Diagram | `.h` 헤더 파일 (클래스 구조) |
+| Class Diagram | `.h` 헤더 파일 (클래스 구조, 가시성, 타입) |
 | Sequence Diagram | `.cpp` 구현 파일 (메서드 로직) |
 
 ---
@@ -23,8 +20,8 @@ Sequence Diagram의 메시지 흐름을 힌트로 각 메서드를 구현합니�
 ```
 04-ooi/code/
 ├── include/
-│   ├── types.h             ← Direction, CleanMode 열거형
-│   ├── Sensor.h            ← 추상 클래스
+│   ├── types.h              ← Direction, CleanMode 열거형
+│   ├── Sensor.h             ← 추상 클래스
 │   ├── FrontSensor.h
 │   ├── LeftSensor.h
 │   ├── RightSensor.h
@@ -104,6 +101,8 @@ public:
 ```cpp
 #pragma once
 #include "FrontSensor.h"
+#include "LeftSensor.h"
+#include "RightSensor.h"
 #include "DustSensor.h"
 #include "MotorController.h"
 #include "CleanerController.h"
@@ -111,27 +110,22 @@ public:
 class RVCOrchestrator {
 private:
     FrontSensor&       frontSensor;
+    LeftSensor&        leftSensor;
+    RightSensor&       rightSensor;
     DustSensor&        dustSensor;
     MotorController&   motor;
     CleanerController& cleaner;
 
-    // Cached periodic sensor states (updated via onLeftDetected / onRightDetected)
-    bool leftDetected{false};
-    bool rightDetected{false};
-
-    void avoidFrontObstacle();   // SD-2
-    void avoidAllObstacles();    // SD-3
+    void avoidFrontObstacle();  // SD-2
+    void avoidAllObstacles();   // SD-3
 
 public:
-    RVCOrchestrator(FrontSensor&, DustSensor&,
-                    MotorController&, CleanerController&);
+    RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
+                    DustSensor& ds, MotorController& mc, CleanerController& cc);
 
-    // System Operations (from OOA SSD)
-    void onTick();
-    void onFrontDetected();
-    void onLeftDetected(bool val);   // SD-0: LeftSensor 주기적 콜백 → 캐싱
-    void onRightDetected(bool val);  // SD-0: RightSensor 주기적 콜백 → 캐싱
-    void onDustDetected(bool val);
+    void onTick();                  // System Operation (SSD-1)
+    void onFrontDetected();         // System Operation (SSD-2, SSD-3)
+    void onDustDetected(bool val);  // System Operation (SSD-4)
 };
 ```
 
@@ -141,28 +135,16 @@ public:
 
 ### RVCOrchestrator.cpp
 
-#### onLeftDetected() / onRightDetected() — SD-0 구현 (주기적 캐싱)
+#### onTick() — SD-1
 
 ```cpp
-// SD-0: LeftSensor 주기적 콜백 → 상태 캐싱
-void RVCOrchestrator::onLeftDetected(bool val) {
-    leftDetected = val;
-}
-
-// SD-0: RightSensor 주기적 콜백 → 상태 캐싱
-void RVCOrchestrator::onRightDetected(bool val) {
-    rightDetected = val;
-}
-```
-
-#### onTick() — SD-1 구현
-
-```cpp
-// SD-1: 장애물 없으면 전진 + 청소 ON (캐싱된 leftDetected/rightDetected 사용)
+// SD-1: FrontSensor, LeftSensor, RightSensor 직접 호출
 void RVCOrchestrator::onTick() {
     bool front = frontSensor.detect();
+    bool left  = leftSensor.detect();
+    bool right = rightSensor.detect();
 
-    if (!front && !leftDetected && !rightDetected) {
+    if (!front && !left && !right) {
         motor.setDirection(Direction::FORWARD);
         cleaner.setMode(CleanMode::ON);
     }
@@ -172,23 +154,27 @@ void RVCOrchestrator::onTick() {
 #### onFrontDetected() — SD-2 / SD-3 분기
 
 ```cpp
-// SD-2 / SD-3: 캐싱된 좌/우 상태로 회피 전략 결정
+// SD-2/SD-3: LeftSensor, RightSensor 직접 호출로 상태 확인 후 분기
 void RVCOrchestrator::onFrontDetected() {
-    if (leftDetected && rightDetected) {
-        avoidAllObstacles();   // SD-3: 전/좌/우 모두 막힘
+    bool left  = leftSensor.detect();
+    bool right = rightSensor.detect();
+
+    if (left && right) {
+        avoidAllObstacles();   // SD-3
     } else {
-        avoidFrontObstacle();  // SD-2: 좌 또는 우가 열려있음
+        avoidFrontObstacle();  // SD-2
     }
 }
 ```
 
-#### avoidFrontObstacle() — SD-2 구현
+#### avoidFrontObstacle() — SD-2
 
 ```cpp
 void RVCOrchestrator::avoidFrontObstacle() {
     cleaner.setMode(CleanMode::OFF);
 
-    if (!leftDetected) {
+    bool left = leftSensor.detect();
+    if (!left) {
         motor.setDirection(Direction::LEFT);
     } else {
         motor.setDirection(Direction::RIGHT);
@@ -199,7 +185,7 @@ void RVCOrchestrator::avoidFrontObstacle() {
 }
 ```
 
-#### avoidAllObstacles() — SD-3 구현
+#### avoidAllObstacles() — SD-3
 
 ```cpp
 void RVCOrchestrator::avoidAllObstacles() {
@@ -211,10 +197,9 @@ void RVCOrchestrator::avoidAllObstacles() {
 }
 ```
 
-#### onDustDetected() — SD-4 구현
+#### onDustDetected() — SD-4
 
 ```cpp
-// SD-4: 먼지 감지 시 파워업 후 ON 복귀
 void RVCOrchestrator::onDustDetected(bool val) {
     if (!val) return;
     cleaner.setMode(CleanMode::UP);
@@ -231,4 +216,4 @@ void RVCOrchestrator::onDustDetected(bool val) {
 | `onTick()` | SD-1: Perform Cleaning | `RVCOrchestrator::onTick()` |
 | `onFrontDetected()` | SD-2: Avoid Front Obstacle | `RVCOrchestrator::avoidFrontObstacle()` |
 | `onFrontDetected()` | SD-3: Avoid All Obstacles | `RVCOrchestrator::avoidAllObstacles()` |
-| `onDustDetected()` | SD-4: Power Up Cleaning | `RVCOrchestrator::onDustDetected()` |
+| `onDustDetected(val)` | SD-4: Power Up Cleaning | `RVCOrchestrator::onDustDetected()` |

@@ -1,45 +1,41 @@
 #include "RVCOrchestrator.h"
 
-RVCOrchestrator::RVCOrchestrator(FrontSensor& fs, DustSensor& ds,
-                                 MotorController& mc, CleanerController& cc)
-    : frontSensor(fs), dustSensor(ds), motor(mc), cleaner(cc)
+RVCOrchestrator::RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
+                                 DustSensor& ds, MotorController& mc, CleanerController& cc)
+    : frontSensor(fs), leftSensor(ls), rightSensor(rs),
+      dustSensor(ds), motor(mc), cleaner(cc)
 {}
 
-// SD-1: onTick() — 장애물 없으면 전진 + 청소 ON
-// 캐싱된 leftDetected/rightDetected 사용
+// SD-1: onTick() — FrontSensor, LeftSensor, RightSensor 직접 호출
 void RVCOrchestrator::onTick() {
     bool front = frontSensor.detect();
+    bool left  = leftSensor.detect();
+    bool right = rightSensor.detect();
 
-    if (!front && !leftDetected && !rightDetected) {
+    if (!front && !left && !right) {
         motor.setDirection(Direction::FORWARD);
         cleaner.setMode(CleanMode::ON);
     }
 }
 
-// SD-0: onLeftDetected() — LeftSensor 주기적 콜백 → 상태 캐싱
-void RVCOrchestrator::onLeftDetected(bool val) {
-    leftDetected = val;
-}
-
-// SD-0: onRightDetected() — RightSensor 주기적 콜백 → 상태 캐싱
-void RVCOrchestrator::onRightDetected(bool val) {
-    rightDetected = val;
-}
-
-// SD-2 / SD-3: onFrontDetected() — 캐싱된 좌/우 상태로 회피 전략 결정
+// SD-2 / SD-3: onFrontDetected() — LeftSensor, RightSensor 직접 호출로 분기
 void RVCOrchestrator::onFrontDetected() {
-    if (leftDetected && rightDetected) {
+    bool left  = leftSensor.detect();
+    bool right = rightSensor.detect();
+
+    if (left && right) {
         avoidAllObstacles();   // SD-3: 전/좌/우 모두 막힘
     } else {
-        avoidFrontObstacle();  // SD-2: 좌 또는 우가 열려있음
+        avoidFrontObstacle();  // SD-2: 좌 또는 우 열림
     }
 }
 
-// SD-2: 전방만 막힌 경우 — 캐싱된 leftDetected로 방향 결정
+// SD-2: 청소 중단 → 열린 방향 회전 → 전진 → 청소 재개
 void RVCOrchestrator::avoidFrontObstacle() {
     cleaner.setMode(CleanMode::OFF);
 
-    if (!leftDetected) {
+    bool left = leftSensor.detect();
+    if (!left) {
         motor.setDirection(Direction::LEFT);
     } else {
         motor.setDirection(Direction::RIGHT);
@@ -49,7 +45,7 @@ void RVCOrchestrator::avoidFrontObstacle() {
     cleaner.setMode(CleanMode::ON);
 }
 
-// SD-3: 전/좌/우 모두 막힌 경우 — 후진 후 방향 전환
+// SD-3: 청소 중단 → 후진 → 방향 전환 → 전진 → 청소 재개
 void RVCOrchestrator::avoidAllObstacles() {
     cleaner.setMode(CleanMode::OFF);
     motor.setDirection(Direction::BACKWARD);
@@ -58,7 +54,7 @@ void RVCOrchestrator::avoidAllObstacles() {
     cleaner.setMode(CleanMode::ON);
 }
 
-// SD-4: onDustDetected() — 먼지 감지 시 파워업 후 ON 복귀
+// SD-4: onDustDetected() — 파워업 후 ON 복귀
 void RVCOrchestrator::onDustDetected(bool val) {
     if (!val) return;
     cleaner.setMode(CleanMode::UP);
