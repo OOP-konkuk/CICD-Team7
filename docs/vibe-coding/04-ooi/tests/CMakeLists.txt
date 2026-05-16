@@ -26,6 +26,7 @@ set(OOI_SOURCES
     ${OOI_SRC_DIR}/MotorController.cpp
     ${OOI_SRC_DIR}/CleanerController.cpp
     ${OOI_SRC_DIR}/RVCOrchestrator.cpp
+    ${OOI_SRC_DIR}/DigitalClock.cpp
 )
 
 set(TEST_SOURCES

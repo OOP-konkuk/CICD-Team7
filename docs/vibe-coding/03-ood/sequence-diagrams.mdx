@@ -10,12 +10,12 @@
 
 SSD와 SD는 1:1 대응합니다. `:System` 블랙박스 내부를 Domain Model의 설계 클래스들로 분해합니다.
 
-| SSD (OOA) | SD (OOD) | System Operation |
-|-----------|----------|-----------------|
-| SSD-1 | SD-1 | `onTick()` — 장애물 없음, 먼지 없음 |
-| SSD-2 | SD-2 | `onFrontDetected()` — 좌/우 열린 경우 |
-| SSD-3 | SD-3 | `onFrontDetected()` — 전/좌/우 모두 막힌 경우 |
-| SSD-4 | SD-4 | `onTick()` — 장애물 없음, 먼지 감지 |
+| SSD (OOA) | SD (OOD) | System Operation                              |
+| --------- | -------- | --------------------------------------------- |
+| SSD-1     | SD-1     | `onTick()` — 장애물 없음, 먼지 없음           |
+| SSD-2     | SD-2     | `onFrontDetected()` — 좌/우 열린 경우         |
+| SSD-3     | SD-3     | `onFrontDetected()` — 전/좌/우 모두 막힌 경우 |
+| SSD-4     | SD-4     | `onTick()` — 장애물 없음, 먼지 감지           |
 
 ---
 
@@ -194,36 +194,37 @@ Clock -> Orch : onTick()
 activate Orch
 Orch -> FS : detect()
 activate FS
-FS --> Orch : false
+FS --> Orch : front
 deactivate FS
 Orch -> LS : detect()
 activate LS
-LS --> Orch : false
+LS --> Orch : left
 deactivate LS
 Orch -> RS : detect()
 activate RS
-RS --> Orch : false
+RS --> Orch : right
 deactivate RS
 Orch -> DS : detect()
 activate DS
-DS --> Orch : true
+DS --> Orch : dust
 deactivate DS
 Orch -> Motor : setDirection(FORWARD)
-note right of Orch : [Dust detected → onDustDetected()]
-Orch -> Orch : onDustDetected()
-activate Orch
-Orch -> Cleaner : setMode(UP)
-note right of Cleaner : 내부 타이머 시작 (5분)
-
-loop until update() == true
-  Orch -> Cleaner : update()
-  activate Cleaner
-  Cleaner --> Orch : false
-  deactivate Cleaner
+alt dust == true
+  Orch -> Orch : onDustDetected()
+  activate Orch
+  Orch -> Cleaner : setMode(UP)
+  note right of Cleaner : 내부 타이머 시작 (5분)
+  loop update() = false
+    Orch -> Cleaner : update()
+    activate Cleaner
+    Cleaner --> Orch : false
+    deactivate Cleaner
+  end
+  Orch -> Cleaner : setMode(ON)
+  deactivate Orch
+else dust == false
+  Orch -> Cleaner : setMode(ON)
 end
-
-Orch -> Cleaner : setMode(ON)
-deactivate Orch
 deactivate Orch
 @enduml
 ```
@@ -236,9 +237,9 @@ deactivate Orch
 
 ## Traceability: SSD → SD
 
-| SSD (OOA) | SD (OOD) | `:System` 블랙박스 분해 |
-|-----------|----------|------------------------|
-| SSD-1: `onTick()` no dust | SD-1 | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, MotorController, CleanerController |
-| SSD-2: `onFrontDetected()` | SD-2 | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController |
-| SSD-3: `onFrontDetected()` all blocked | SD-3 | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController |
-| SSD-4: `onTick()` dust detected | SD-4 | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, CleanerController |
+| SSD (OOA)                              | SD (OOD) | `:System` 블랙박스 분해                                                                               |
+| -------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| SSD-1: `onTick()` no dust              | SD-1     | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, MotorController, CleanerController |
+| SSD-2: `onFrontDetected()`             | SD-2     | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController                          |
+| SSD-3: `onFrontDetected()` all blocked | SD-3     | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController                          |
+| SSD-4: `onTick()` dust detected        | SD-4     | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, CleanerController                  |

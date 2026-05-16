@@ -60,10 +60,8 @@ package "Sensor" {
 }
 
 class RVCOrchestrator <<Business Object>> {
-  + performCleaning() : void
-  + avoidFrontObstacle() : void
-  + avoidAllObstacles() : void
-  + powerUpCleaning() : void
+  + onTick() : void
+  + onFrontDetected() : void
 }
 
 class MotorController <<Business Object>> {
@@ -100,10 +98,11 @@ Sensor <|-- LeftSensor
 Sensor <|-- RightSensor
 Sensor <|-- DustSensor
 
-RVCOrchestrator "1" --> "1" MotorController    : controls >
-RVCOrchestrator "1" --> "1" CleanerController  : controls >
-RVCOrchestrator "1" --> "1..*" Sensor          : reads >
-RVCOrchestrator "1" --> "1" DigitalClock       : listens >
+DigitalClock "1" --> "1" RVCOrchestrator    : triggers (onTick) >
+FrontSensor  "1" --> "1" RVCOrchestrator    : triggers (onFrontDetected) >
+RVCOrchestrator "1" --> "1" MotorController  : controls >
+RVCOrchestrator "1" --> "1" CleanerController : controls >
+RVCOrchestrator "1" --> "1..*" Sensor         : reads >
 
 MotorController  --> Direction  : uses >
 CleanerController --> CleanMode : uses >

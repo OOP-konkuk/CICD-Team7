@@ -15,7 +15,7 @@
 | `FrontSensor` / `LeftSensor` / `RightSensor` / `DustSensor` | 동일 | `+ detect(): bool` 구체 구현 | Domain Model |
 | `MotorController` | `MotorController` | `setDirection()` / `getDirection()` 시그니처 확정 | Domain Model |
 | `CleanerController` | `CleanerController` | `setMode()` / `getMode()` + 타이머 속성(`boostDurationMs`, `boostRunning`, `boostEndTime`) + `update(): bool` 추가 | Domain Model + FR-5 "일정 시간" |
-| `DigitalClock` | `DigitalClock` | `tick(): void` | Domain Model |
+| `DigitalClock` | `DigitalClock` | `intervalMs`, `start()`, `stop()`, `tick()` — 주기적 onTick() 호출 | 코드 구현 기준 |
 | `Direction` enum | `Direction` | FORWARD / BACKWARD / LEFT / RIGHT | Domain Model + I/O Events |
 | `CleanMode` enum | `CleanMode` | ON / OFF / UP | Domain Model + I/O Events |
 
@@ -62,6 +62,10 @@ class DustSensor {
 }
 
 class DigitalClock {
+  - intervalMs : int
+  - running : bool
+  + start() : void
+  + stop() : void
   + tick() : void
 }
 
@@ -94,11 +98,11 @@ Sensor <|-- LeftSensor
 Sensor <|-- RightSensor
 Sensor <|-- DustSensor
 
+DigitalClock "1" --> "1" RVCOrchestrator     : triggers (onTick) >
 RVCOrchestrator "1" --> "1" FrontSensor        : reads >
 RVCOrchestrator "1" --> "1" LeftSensor         : reads >
 RVCOrchestrator "1" --> "1" RightSensor        : reads >
 RVCOrchestrator "1" --> "1" DustSensor         : reads >
-RVCOrchestrator "1" --> "1" DigitalClock       : listens >
 RVCOrchestrator "1" --> "1" MotorController    : controls >
 RVCOrchestrator "1" --> "1" CleanerController  : controls >
 
@@ -121,7 +125,7 @@ CleanerController ..> CleanMode  : uses
 |------|------|----|-----------|
 | Generalization | FrontSensor / LeftSensor / RightSensor / DustSensor | Sensor | Domain Model + NFR-3 확장성 |
 | Association (reads) | RVCOrchestrator | FrontSensor / LeftSensor / RightSensor / DustSensor | SD-1/SD-4: detect() 직접 호출 (onTick 내부 poll) |
-| Association (listens) | RVCOrchestrator | DigitalClock | UC-1 Actor: Digital Clock |
+| Association (triggers) | DigitalClock | RVCOrchestrator | onTick() 주기적 호출 |
 | Association (controls) | RVCOrchestrator | MotorController | Domain Model — 방향 제어 위임 |
 | Association (controls) | RVCOrchestrator | CleanerController | Domain Model — 청소 제어 위임 |
 | Dependency (uses) | MotorController | Direction | Domain Model |
