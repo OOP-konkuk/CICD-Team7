@@ -149,7 +149,12 @@ note right of Orch
 end note
 Orch -> Cleaner : setMode(OFF)
 Orch -> Motor : setDirection(BACKWARD)
-Orch -> Motor : setDirection(LEFT or RIGHT)
+Orch -> LS : detect()
+activate LS
+LS --> Orch : false
+deactivate LS
+note right of Orch : [후진 후 재확인 → LEFT open]
+Orch -> Motor : setDirection(LEFT)
 Orch -> Motor : setDirection(FORWARD)
 Orch -> Cleaner : setMode(ON)
 deactivate Orch
