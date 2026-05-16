@@ -84,17 +84,22 @@ title SD-2: Avoid Front Obstacle\n(based on SSD-2: onFrontDetected())
 participant ":FrontSensor\n(Interrupt)" as FS
 participant ":RVCOrchestrator" as Orch
 participant ":LeftSensor" as LS
+participant ":RightSensor" as RS
 participant ":MotorController" as Motor
 participant ":CleanerController" as Cleaner
 
 FS -> Orch : onFrontDetected()
 activate Orch
-Orch -> Cleaner : setMode(OFF)
 Orch -> LS : detect()
 activate LS
 LS --> Orch : false
 deactivate LS
-note right of Orch : [Left open → turn LEFT]
+Orch -> RS : detect()
+activate RS
+RS --> Orch : false
+deactivate RS
+note right of Orch : [Not (left && right) → avoidFrontObstacle(left)]
+Orch -> Cleaner : setMode(OFF)
 Orch -> Motor : setDirection(LEFT)
 Orch -> Motor : setDirection(FORWARD)
 Orch -> Cleaner : setMode(ON)

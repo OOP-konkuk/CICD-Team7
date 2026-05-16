@@ -98,7 +98,6 @@ actor "Digital Clock\n(Timer)" as Clock
 actor "Front Sensor\n(Interrupt)" as FrontSensor
 actor "Left Sensor\n(Periodic)" as LeftSensor
 actor "Right Sensor\n(Periodic)" as RightSensor
-actor "Dust Sensor\n(Periodic)" as DustSensor
 
 rectangle "RVC Control SW" {
   usecase "UC-1\nPerform Cleaning" as UC1
@@ -108,11 +107,11 @@ rectangle "RVC Control SW" {
 }
 
 Clock       --> UC1
+Clock       --> UC4
 FrontSensor --> UC2
 FrontSensor --> UC3
 LeftSensor  --> UC3
 RightSensor --> UC3
-DustSensor  --> UC4
 
 UC2 .> UC3 : <<extend>>
 
