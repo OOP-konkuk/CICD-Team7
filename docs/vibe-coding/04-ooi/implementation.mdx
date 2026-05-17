@@ -1,0 +1,299 @@
+# Implementation (OOI) — RVC Control SW
+
+> **Phase**: OOI in the 1st Elaboration  
+> **Input**: `03-ood/class-diagram.mdx` + `03-ood/sequence-diagrams.mdx`  
+> **Output**: C++ 구현 코드 (System Operations)
+
+---
+
+## Overview
+
+| OOD Artifact | OOI 결과 |
+|--------------|---------|
+| Class Diagram | `.h` 헤더 파일 (클래스 구조, 가시성, 타입) |
+| Sequence Diagram | `.cpp` 구현 파일 (메서드 로직) |
+
+---
+
+## 파일 구조
+
+```
+include/
+├── types.h              ← Direction, CleanMode 열거형
+├── Sensor.h             ← 추상 클래스
+├── FrontSensor.h
+├── LeftSensor.h
+├── RightSensor.h
+├── DustSensor.h
+├── MotorController.h
+├── CleanerController.h  ← 타이머 포함 (NFR-8: 5분)
+├── DigitalClock.h       ← 주기 설정 가능한 Clock (NFR-9)
+└── RVCOrchestrator.h    ← System Operations 선언
+src/
+├── FrontSensor.cpp
+├── LeftSensor.cpp
+├── RightSensor.cpp
+├── DustSensor.cpp
+├── MotorController.cpp
+├── CleanerController.cpp
+├── DigitalClock.cpp
+└── RVCOrchestrator.cpp  ← System Operations 구현
+```
+
+---
+
+## Skeleton Code (from Class Diagram)
+
+### types.h
+
+```cpp
+#pragma once
+
+enum class Direction { FORWARD, BACKWARD, LEFT, RIGHT };
+enum class CleanMode  { ON, OFF, UP };
+```
+
+### Sensor.h (abstract)
+
+```cpp
+#pragma once
+
+class Sensor {
+protected:
+    bool detected{false};
+public:
+    virtual ~Sensor() = default;
+    virtual bool detect() = 0;
+};
+```
+
+### MotorController.h
+
+```cpp
+#pragma once
+#include "types.h"
+
+class MotorController {
+private:
+    Direction direction{Direction::FORWARD};
+public:
+    void setDirection(Direction dir);
+    Direction getDirection() const;
+};
+```
+
+### CleanerController.h
+
+```cpp
+#pragma once
+#include <chrono>
+#include "types.h"
+
+class CleanerController {
+private:
+    static constexpr int DEFAULT_BOOST_DURATION_MS = 5 * 60 * 1000; // NFR-8: 5분
+
+    CleanMode mode{CleanMode::OFF};
+    int boostDurationMs{DEFAULT_BOOST_DURATION_MS};
+    bool boostRunning{false};
+    std::chrono::steady_clock::time_point boostEndTime{};
+
+public:
+    explicit CleanerController(int durationMs = DEFAULT_BOOST_DURATION_MS);
+
+    void setMode(CleanMode m);
+    CleanMode getMode() const;
+    bool update();
+};
+```
+
+### DigitalClock.h
+
+```cpp
+#pragma once
+#include <thread>
+#include <atomic>
+#include "RVCOrchestrator.h"
+
+class DigitalClock {
+private:
+    static constexpr int DEFAULT_INTERVAL_MS = 100;
+
+    RVCOrchestrator& orchestrator;
+    int intervalMs;
+    std::atomic<bool> running{false};
+    std::thread clockThread;
+
+    void run();
+
+public:
+    explicit DigitalClock(RVCOrchestrator& orch, int intervalMs = DEFAULT_INTERVAL_MS);
+    ~DigitalClock();
+
+    void start();
+    void stop();
+    void tick();  // 단일 수동 tick (테스트용)
+};
+```
+
+### RVCOrchestrator.h
+
+```cpp
+#pragma once
+#include "FrontSensor.h"
+#include "LeftSensor.h"
+#include "RightSensor.h"
+#include "DustSensor.h"
+#include "MotorController.h"
+#include "CleanerController.h"
+
+class RVCOrchestrator {
+private:
+    FrontSensor&       frontSensor;
+    LeftSensor&        leftSensor;
+    RightSensor&       rightSensor;
+    DustSensor&        dustSensor;
+    MotorController&   motor;
+    CleanerController& cleaner;
+
+    void onDustDetected();                  // SD-4 (private)
+    void avoidFrontObstacle(bool leftBlocked); // SD-2 (private)
+    void avoidAllObstacles();               // SD-3 (private)
+
+public:
+    RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
+                    DustSensor& ds, MotorController& mc, CleanerController& cc);
+
+    void onTick();          // System Operation (SSD-1, SSD-4)
+    void onFrontDetected(); // System Operation (SSD-2, SSD-3)
+};
+```
+
+---
+
+## Realization (from Sequence Diagrams)
+
+### RVCOrchestrator.cpp
+
+#### onTick() — SD-1 / SD-4
+
+```cpp
+// SD-1: 장애물 없음 + 먼지 없음 → FORWARD + ON
+// SD-4: 장애물 없음 + 먼지 있음 → FORWARD + onDustDetected()
+void RVCOrchestrator::onTick() {
+    bool front = frontSensor.detect();
+    bool left  = leftSensor.detect();
+    bool right = rightSensor.detect();
+    bool dust  = dustSensor.detect();
+
+    if (!front && !left && !right) {
+        motor.setDirection(Direction::FORWARD);
+        if (dust) {
+            onDustDetected();
+        } else {
+            cleaner.setMode(CleanMode::ON);
+        }
+    }
+}
+```
+
+#### onFrontDetected() — SD-2 / SD-3 분기
+
+```cpp
+// SD-2/SD-3: 좌/우 detect 결과로 분기, left 값을 파라미터로 전달 (double poll 방지)
+void RVCOrchestrator::onFrontDetected() {
+    bool left  = leftSensor.detect();
+    bool right = rightSensor.detect();
+
+    if (left && right) {
+        avoidAllObstacles();      // SD-3: 전/좌/우 모두 막힘
+    } else {
+        avoidFrontObstacle(left); // SD-2: 좌 또는 우 열림
+    }
+}
+```
+
+#### avoidFrontObstacle() — SD-2
+
+```cpp
+// onFrontDetected()에서 읽은 leftBlocked 값 재사용 (double poll 없음)
+void RVCOrchestrator::avoidFrontObstacle(bool leftBlocked) {
+    cleaner.setMode(CleanMode::OFF);
+
+    if (!leftBlocked) {
+        motor.setDirection(Direction::LEFT);
+    } else {
+        motor.setDirection(Direction::RIGHT);
+    }
+
+    motor.setDirection(Direction::FORWARD);
+    cleaner.setMode(CleanMode::ON);
+}
+```
+
+#### avoidAllObstacles() — SD-3
+
+```cpp
+// 후진 후 leftSensor 재poll — 후진으로 상황이 바뀔 수 있으므로 의도적
+void RVCOrchestrator::avoidAllObstacles() {
+    cleaner.setMode(CleanMode::OFF);
+    motor.setDirection(Direction::BACKWARD);
+
+    bool leftBlocked = leftSensor.detect();
+    if (!leftBlocked) {
+        motor.setDirection(Direction::LEFT);
+    } else {
+        motor.setDirection(Direction::RIGHT);
+    }
+
+    motor.setDirection(Direction::FORWARD);
+    cleaner.setMode(CleanMode::ON);
+}
+```
+
+#### onDustDetected() — SD-4
+
+```cpp
+// setMode(UP) 시 CleanerController 내부 타이머 시작 (NFR-8: 5분)
+// update() polling으로 만료 확인 후 ON 복귀
+void RVCOrchestrator::onDustDetected() {
+    cleaner.setMode(CleanMode::UP);
+
+    while (!cleaner.update()) {
+        // boost 만료까지 polling
+    }
+
+    cleaner.setMode(CleanMode::ON);
+}
+```
+
+#### CleanerController.cpp
+
+```cpp
+void CleanerController::setMode(CleanMode m) {
+    mode = m;
+    if (m == CleanMode::UP) {
+        boostRunning = true;
+        boostEndTime = std::chrono::steady_clock::now()
+                       + std::chrono::milliseconds(boostDurationMs);
+    } else {
+        boostRunning = false;
+    }
+}
+
+bool CleanerController::update() {
+    if (!boostRunning) return false;
+    return std::chrono::steady_clock::now() >= boostEndTime;
+}
+```
+
+---
+
+## OOD → OOI 추적표 (Traceability)
+
+| System Operation (OOA) | Sequence Diagram (OOD) | 구현 메서드 (OOI) |
+|------------------------|------------------------|-----------------|
+| `onTick()` | SD-1: Perform Cleaning | `RVCOrchestrator::onTick()` → setDirection(FORWARD) + setMode(ON) |
+| `onTick()` | SD-4: Power Up Cleaning | `RVCOrchestrator::onTick()` → onDustDetected() |
+| `onFrontDetected()` | SD-2: Avoid Front Obstacle | `RVCOrchestrator::avoidFrontObstacle(leftBlocked)` |
+| `onFrontDetected()` | SD-3: Avoid All Obstacles | `RVCOrchestrator::avoidAllObstacles()` |

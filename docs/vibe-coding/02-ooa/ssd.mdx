@@ -1,0 +1,168 @@
+# System Sequence Diagrams (SSD) — RVC Control SW
+
+> **Phase**: OOA in the 1st Elaboration  
+> **Output**: System Sequence Diagrams → System Operations 도출
+
+---
+
+## Overview
+
+SSD는 하나의 Use Case 시나리오 동안 외부 Actor와 시스템(:System) 사이의 이벤트 흐름을 표현합니다.  
+SSD에서 도출된 시스템 메시지는 **System Operations(System Interface)** 로 정의됩니다.
+
+---
+
+## System Operations (System Interface)
+
+```
+<<Interface>>
+RVCControlSystem
+─────────────────────────────────────────
++ onTick()          : void
++ onFrontDetected() : void
+```
+
+> **참고**: 모든 센서(FrontSensor, LeftSensor, RightSensor, DustSensor)는 System 외부 하드웨어로 취급합니다.  
+> System은 각 센서에 `detect()`를 명시적으로 요청하고 결과를 수신합니다.  
+> MotorController, CleanerController는 System 내부 소프트웨어이므로 SSD에 표시하지 않습니다.
+
+---
+
+## SSD-1: Perform Cleaning
+
+### PlantUML Code
+
+```plantuml
+@startuml SSD1_PerformCleaning
+title SSD-1: Perform Cleaning
+
+actor ":DigitalClock" as Clock
+boundary ":System" as Sys
+actor ":FrontSensor" as FS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+actor ":DustSensor" as DS
+
+Clock -> Sys : onTick()
+activate Sys
+Sys -> FS : detect()
+FS --> Sys : false
+Sys -> LS : detect()
+LS --> Sys : false
+Sys -> RS : detect()
+RS --> Sys : false
+Sys -> DS : detect()
+DS --> Sys : false
+deactivate Sys
+@enduml
+```
+
+### Diagram
+
+![SSD-1 Perform Cleaning](./images/SSD1_PerformCleaning.png)
+
+---
+
+## SSD-2: Avoid Front Obstacle
+
+### PlantUML Code
+
+```plantuml
+@startuml SSD2_AvoidFrontObstacle
+title SSD-2: Avoid Front Obstacle
+
+actor ":FrontSensor" as FS
+boundary ":System" as Sys
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+
+FS -> Sys : onFrontDetected()
+activate Sys
+Sys -> LS : detect()
+LS --> Sys : false (or true)
+Sys -> RS : detect()
+RS --> Sys : false (or true)
+deactivate Sys
+@enduml
+```
+
+### Diagram
+
+![SSD-2 Avoid Front Obstacle](./images/SSD2_AvoidFrontObstacle.png)
+
+---
+
+## SSD-3: Avoid All Obstacles
+
+### PlantUML Code
+
+```plantuml
+@startuml SSD3_AvoidAllObstacles
+title SSD-3: Avoid All Obstacles
+
+actor ":FrontSensor" as FS
+boundary ":System" as Sys
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+
+FS -> Sys : onFrontDetected()
+activate Sys
+Sys -> LS : detect()
+LS --> Sys : true
+Sys -> RS : detect()
+RS --> Sys : true
+Sys -> LS : detect()
+LS --> Sys : true (or false)
+deactivate Sys
+@enduml
+```
+
+### Diagram
+
+![SSD-3 Avoid All Obstacles](./images/SSD3_AvoidAllObstacles.png)
+
+---
+
+## SSD-4: Power Up Cleaning
+
+### PlantUML Code
+
+```plantuml
+@startuml SSD4_PowerUpCleaning
+title SSD-4: Power Up Cleaning
+
+actor ":DigitalClock" as Clock
+boundary ":System" as Sys
+actor ":FrontSensor" as FS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+actor ":DustSensor" as DS
+
+Clock -> Sys : onTick()
+activate Sys
+Sys -> FS : detect()
+FS --> Sys : false
+Sys -> LS : detect()
+LS --> Sys : false
+Sys -> RS : detect()
+RS --> Sys : false
+Sys -> DS : detect()
+DS --> Sys : true
+deactivate Sys
+@enduml
+```
+
+### Diagram
+
+![SSD-4 Power Up Cleaning](./images/SSD4_PowerUpCleaning.png)
+
+---
+
+## Traceability: Use Case → System Operation
+
+| Use Case | System Operation | 비고 |
+|----------|-----------------|------|
+| UC-1: Perform Cleaning | `onTick()` | DigitalClock → System |
+| UC-2: Avoid Front Obstacle | `onFrontDetected()` | FrontSensor → System (Interrupt) |
+| UC-3: Avoid All Obstacles | `onFrontDetected()` | System이 내부적으로 Left/Right Sensor를 직접 poll |
+| UC-4: Power Up Cleaning | `onTick()` | System이 onTick() 내부에서 DustSensor를 직접 poll |

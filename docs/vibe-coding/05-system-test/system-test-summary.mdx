@@ -1,0 +1,150 @@
+# System Test — RVC Control SW
+
+> **Phase**: System Test in the 1st Elaboration
+> **Input**: `03-ood/sequence-diagrams.mdx` + `04-ooi/implementation.mdx`
+> **Output**: 시뮬레이터 + 시스템 테스트 (45 cases)
+
+---
+
+## Unit Test vs System Test
+
+| 구분 | Unit Test | System Test |
+|------|-----------|-------------|
+| 대상 | 클래스 단위 (MotorController, CleanerController 등) | 전체 시스템 흐름 (UC 단위) |
+| 센서 처리 | Stub 직접 주입 | Simulator를 통해 환경 구성 |
+| 검증 방식 | 메서드 반환값·상태 | 하드웨어 최종 상태 (모터·청소기) |
+| 프레임워크 | Google Test | SimpleTestRunner (커스텀, JUnit XML 출력) |
+| 테스트 수 | 55개 | 45개 |
+
+---
+
+## 시뮬레이터 구조
+
+```
+RVCSystemSimulator
+│
+├── [환경] StubFrontSensor / StubLeftSensor / StubRightSensor / StubDustSensor
+│         └── setFrontObstacle() / setLeftObstacle() / setRightObstacle() / setDustDetected()
+│
+├── [하드웨어] MotorController  ──▶  motorIsForward() / motorIsBackward() / …
+│            CleanerController ──▶  cleanerIsOn() / cleanerIsOff() / cleanerIsUp()
+│
+├── [시스템] RVCOrchestrator (실제 구현체)
+│
+└── [트리거] tick()          → DigitalClock::tick() → onTick()
+            frontDetected() → FrontSensor interrupt → onFrontDetected()
+```
+
+> **핵심 설계 원칙**: 시뮬레이터는 실제 구현체를 그대로 사용한다.
+> Stub은 센서 값 주입에만 사용하고, Motor·Cleaner는 Mock 없이 실 객체로 검증한다.
+
+---
+
+## 테스트 흐름 구성
+
+### Flow 1 — UC-1: Perform Cleaning `10 cases`
+
+```
+환경: 장애물 없음 + 먼지 없음
+트리거: tick()
+SD-1 경로: onTick() → 센서 모두 false → setDirection(FORWARD) + setMode(ON)
+```
+
+| 검증 항목 | Positive | Negative |
+|----------|----------|----------|
+| 모터 방향 | FORWARD | 장애물 시 미변경 |
+| 청소기 모드 | ON | UP 아님, 장애물 시 OFF 유지 |
+| 연속 tick | 상태 유지 | 전/좌/우 장애물 시 ON 아님 |
+
+---
+
+### Flow 2 — UC-2: Avoid Front Obstacle `8 cases`
+
+```
+환경: 좌 또는 우 중 하나 열림
+트리거: frontDetected()
+SD-2 경로: onFrontDetected() → avoidFrontObstacle() → OFF → turn → FORWARD → ON
+```
+
+| 환경 | 최종 모터 | 최종 청소기 |
+|------|----------|------------|
+| 좌 열림 (left=false) | FORWARD | ON |
+| 우 열림 (left=true, right=false) | FORWARD | ON |
+
+> 두 경우 모두 최종 상태는 `FORWARD + ON`. 중간 회전 방향은 SD-2에서 검증.
+
+---
+
+### Flow 3 — UC-3: Avoid All Obstacles `8 cases`
+
+```
+환경: 전/좌/우 모두 막힘
+트리거: frontDetected()
+SD-3 경로: onFrontDetected() → avoidAllObstacles() → OFF → BACKWARD → (좌 재poll) → RIGHT → FORWARD → ON
+```
+
+| 검증 항목 | 결과 |
+|----------|------|
+| 최종 모터 | FORWARD (BACKWARD·LEFT·RIGHT 아님) |
+| 최종 청소기 | ON (OFF·UP 아님) |
+| 비고 | 후진 후 좌 센서 재poll — Stub 고정값(true)이므로 RIGHT 회전 후 FORWARD |
+
+---
+
+### Flow 4 — UC-4: Power Up Cleaning `10 cases`
+
+```
+환경: 장애물 없음 + 먼지 감지
+트리거: tick()
+SD-4 경로: onTick() → onDustDetected() → setMode(UP) → update() loop (20ms) → setMode(ON)
+```
+
+| 검증 항목 | 결과 |
+|----------|------|
+| 모터 | FORWARD |
+| 청소기 (boost 완료 후) | ON (UP 아님 — 이미 만료) |
+| 먼지 + 장애물 동시 | 아무것도 변경 안 됨 (onTick 분기 미진입) |
+
+---
+
+### Flow 5 — Integration: Multi-UC Scenarios `9 cases`
+
+UC들이 순서대로 발생할 때 시스템 상태 전이가 올바른지 검증한다.
+
+| 시나리오 | 흐름 |
+|---------|------|
+| UC-1 → UC-2 | tick → frontDetected (좌 열림) → FORWARD + ON |
+| UC-1 → UC-3 | tick → frontDetected (전방위 막힘) → FORWARD + ON |
+| UC-2 → UC-1 | frontDetected → tick → FORWARD + ON 유지 |
+| UC-3 → UC-1 | frontDetected (전방위) → tick → FORWARD + ON 유지 |
+| UC-1 → UC-4 | tick → tick (먼지) → FORWARD + ON |
+| UC-4 → UC-1 | tick (먼지) → tick (정상) → FORWARD + ON 유지 |
+| UC-1 후 장애물 tick | 청소기 ON 상태 보존 (onTick 무변경) |
+| UC-2 연속 2회 | 회피 → tick → 재회피 → FORWARD + ON |
+| UC-3 → UC-2 | 전방위 회피 → 우측 열린 회피 → FORWARD + ON |
+
+---
+
+## 테스트 결과 요약
+
+```
+Flow 1  Perform Cleaning         10 / 10  ✅
+Flow 2  Avoid Front Obstacle      8 /  8  ✅
+Flow 3  Avoid All Obstacles       8 /  8  ✅
+Flow 4  Power Up Cleaning        10 / 10  ✅
+Flow 5  Integration               9 /  9  ✅
+─────────────────────────────────────────
+Total                            45 / 45  ✅
+```
+
+---
+
+## 추적성 (Traceability)
+
+| Use Case | System Operation | Simulator 트리거 | Flow |
+|----------|-----------------|----------------|------|
+| UC-1: Perform Cleaning | `onTick()` | `sim.tick()` | Flow 1 |
+| UC-2: Avoid Front Obstacle | `onFrontDetected()` | `sim.frontDetected()` | Flow 2 |
+| UC-3: Avoid All Obstacles | `onFrontDetected()` | `sim.frontDetected()` | Flow 3 |
+| UC-4: Power Up Cleaning | `onTick()` | `sim.tick()` | Flow 4 |
+| UC-1~4 복합 | `onTick()` + `onFrontDetected()` | 순서 조합 | Flow 5 |

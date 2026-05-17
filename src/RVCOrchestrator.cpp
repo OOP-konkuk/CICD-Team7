@@ -1,115 +1,77 @@
 #include "RVCOrchestrator.h"
 
-RVCOrchestrator::RVCOrchestrator(
-    CLIHandler& cliHandler,
-    RVCPowerController* power,
-    MotorController* motor,
-    CleanerController* cleaner,
-    MovementPolicyController* movement,
-    CleaningPolicyController* cleaningPolicy)
-    : cliHandler(cliHandler),
-      powerPtr(power),
-      motorPtr(motor),
-      cleanerPtr(cleaner),
-      movementPtr(movement),
-      cleaningPolicyPtr(cleaningPolicy),
-      errorHandler(this)
+RVCOrchestrator::RVCOrchestrator(FrontSensor& fs, LeftSensor& ls, RightSensor& rs,
+                                 DustSensor& ds, MotorController& mc, CleanerController& cc)
+    : frontSensor(fs), leftSensor(ls), rightSensor(rs),
+      dustSensor(ds), motor(mc), cleaner(cc)
 {}
 
-// UC1: Power On System
-void RVCOrchestrator::powerOn() {
-    systemRunning = true;
+// SD-1 / SD-4: onTick() — 모든 센서 poll, 상태에 따라 분기
+void RVCOrchestrator::onTick() {
+    bool front = frontSensor.detect();
+    bool left  = leftSensor.detect();
+    bool right = rightSensor.detect();
+    bool dust  = dustSensor.detect();
 
-    powerPtr->initialize();
-    motorPtr->initialize();
-    cleanerPtr->initialize();
-    cliHandler.display("시스템 준비 완료!");
-}
-
-// UC2: Perform Cleaning
-void RVCOrchestrator::performCleaning() {
-    cleanerPtr->requestStartCleaning();
-    motorPtr->move(DirectionType::FORWARD);
-
-    while (systemRunning) {
-        bool isDetected = movementPtr->checkObstacle();
-        if (isDetected) {
-            detectObstacle();
-            motorPtr->move(DirectionType::FORWARD);
-        }
-
-        bool dustDetected = cleaningPolicyPtr->checkDust();
-        if (dustDetected) {
-            performBoostCleaning();
+    if (!front && !left && !right) {
+        motor.setDirection(Direction::FORWARD);
+        if (dust) {
+            onDustDetected();          // SD-4: UP → polling → ON
+        } else {
+            cleaner.setMode(CleanMode::ON);  // SD-1: 먼지 없으면 ON
         }
     }
 }
 
-// UC3: Detect Obstacle
-void RVCOrchestrator::detectObstacle() {
-    cleanerPtr->requestStopCleaning();
-    motorPtr->requestStopMoving();
-    DirectionType dir = movementPtr->checkMovementPolicy();
-    if (dir == DirectionType::LEFT)     { turnLeft();        return; }
-    if (dir == DirectionType::RIGHT)    { turnRight();       return; }
-    if (dir == DirectionType::BACKWARD) { backwardAndTurn(); return; }
+// SD-2 / SD-3: onFrontDetected() — 장애물 회피 분기
+void RVCOrchestrator::onFrontDetected() {
+    bool left  = leftSensor.detect();
+    bool right = rightSensor.detect();
+
+    if (left && right) {
+        avoidAllObstacles();        // SD-3: 전/좌/우 모두 막힘
+    } else {
+        avoidFrontObstacle(left);   // SD-2: 이미 읽은 left 값 전달 (double poll 방지)
+    }
 }
 
-// UC4: Turn Left
-void RVCOrchestrator::turnLeft() {
-    motorPtr->move(DirectionType::LEFT);
-}
+// SD-2: 청소 중단 → 열린 방향 회전 → 전진 → 청소 재개
+void RVCOrchestrator::avoidFrontObstacle(bool leftBlocked) {
+    cleaner.setMode(CleanMode::OFF);
 
-// UC5: Turn Right
-void RVCOrchestrator::turnRight() {
-    motorPtr->move(DirectionType::RIGHT);
-}
-
-// UC6: Backward & Turn
-void RVCOrchestrator::backwardAndTurn() {
-    motorPtr->move(DirectionType::BACKWARD);
-    DirectionType dir = movementPtr->checkMovementPolicy();
-    if (dir == DirectionType::LEFT)  { turnLeft();  return; }
-    if (dir == DirectionType::RIGHT) { turnRight(); return; }
-    // all blocked → remain stopped (fail-safe)
-}
-
-//UC7: perform boost cleaning
-void RVCOrchestrator::performBoostCleaning() {
-    StateType state = cleaningPolicyPtr->checkingState();
-    
-    if (state == StateType::NORMAL) {
-        cleaningPolicyPtr->changeToBoost();
-        cleanerPtr->requestPowerUp();
-
-        while (true) {
-            bool isBoostExpired = cleanerPtr->update();
-
-            if (isBoostExpired) {
-                cleaningPolicyPtr->changeToNormal();
-                break;
-            }
-        }
+    if (!leftBlocked) {
+        motor.setDirection(Direction::LEFT);
+    } else {
+        motor.setDirection(Direction::RIGHT);
     }
 
+    motor.setDirection(Direction::FORWARD);
+    cleaner.setMode(CleanMode::ON);
 }
 
-// UC8: Power Off System
-void RVCOrchestrator::powerOff() {
-    systemRunning = false;
+// SD-3: 청소 중단 → 후진 → 열린 방향 회전 → 전진 → 청소 재개
+void RVCOrchestrator::avoidAllObstacles() {
+    cleaner.setMode(CleanMode::OFF);
+    motor.setDirection(Direction::BACKWARD);
 
-    motorPtr->requestStopMoving();
-    cleanerPtr->requestStopCleaning();
-    cliHandler.display("시스템 종료 중...");
-    powerPtr->shutdown();
+    bool leftBlocked = leftSensor.detect();
+    if (!leftBlocked) {
+        motor.setDirection(Direction::LEFT);
+    } else {
+        motor.setDirection(Direction::RIGHT);
+    }
+
+    motor.setDirection(Direction::FORWARD);
+    cleaner.setMode(CleanMode::ON);
 }
 
-// UC9: Power Off System - Exceptional
-void RVCOrchestrator::notifyError(const ErrorInfo& error) {
-    systemRunning = false;
+// SD-4: onDustDetected() — 파워업 후 polling으로 만료 확인, ON 복귀
+void RVCOrchestrator::onDustDetected() {
+    cleaner.setMode(CleanMode::UP);
 
-    cliHandler.errDisplay(error);
-    motorPtr->requestStopMoving();
-    cleanerPtr->requestStopCleaning();
-    powerPtr->shutdown();
+    while (!cleaner.update()) {
+        // boost 만료까지 polling
+    }
+
+    cleaner.setMode(CleanMode::ON);
 }

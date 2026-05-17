@@ -427,4 +427,10 @@ Thumbs.db
 cmake-build-debug/
 cmake-build-release/
 
+# 커버리지 산출물 (루트 기준)
+build_cov/
+coverage_report/
+coverage.info
+coverage_src.info
+
 # End of https://www.toptal.com/developers/gitignore/api/c++,vs

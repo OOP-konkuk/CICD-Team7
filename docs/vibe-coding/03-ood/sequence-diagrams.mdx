@@ -1,0 +1,245 @@
+# Sequence Diagrams (OOD) — RVC Control SW
+
+> **Phase**: OOD in the 1st Elaboration  
+> **Input**: `01-inception/use-cases.mdx` + `02-ooa/ssd.mdx` + `02-ooa/domain-model.mdx`  
+> **Output**: Design-level Sequence Diagrams — SSD의 `:System` 블랙박스를 Domain Model 클래스로 구체화
+
+---
+
+## Overview
+
+SSD와 SD는 1:1 대응합니다. `:System` 블랙박스 내부를 Domain Model의 설계 클래스들로 분해합니다.
+
+| SSD (OOA) | SD (OOD) | System Operation                              |
+| --------- | -------- | --------------------------------------------- |
+| SSD-1     | SD-1     | `onTick()` — 장애물 없음, 먼지 없음           |
+| SSD-2     | SD-2     | `onFrontDetected()` — 좌/우 열린 경우         |
+| SSD-3     | SD-3     | `onFrontDetected()` — 전/좌/우 모두 막힌 경우 |
+| SSD-4     | SD-4     | `onTick()` — 장애물 없음, 먼지 감지           |
+
+---
+
+## SD-1: Perform Cleaning
+
+> **SSD-1 → SD-1**: `onTick()` 호출 시 전 센서(Front/Left/Right/Dust) 확인.  
+> 장애물 없음 + 먼지 없음 → Forward + ON
+
+### PlantUML Code
+
+```plantuml
+@startuml SD1_PerformCleaning
+title SD-1: Perform Cleaning\n(based on SSD-1: onTick(), no obstacle, no dust)
+
+actor ":DigitalClock" as Clock
+participant ":RVCOrchestrator" as Orch
+actor ":FrontSensor" as FS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+actor ":DustSensor" as DS
+participant ":MotorController" as Motor
+participant ":CleanerController" as Cleaner
+
+Clock -> Orch : onTick()
+activate Orch
+Orch -> FS : detect()
+activate FS
+FS --> Orch : false
+deactivate FS
+Orch -> LS : detect()
+activate LS
+LS --> Orch : false
+deactivate LS
+Orch -> RS : detect()
+activate RS
+RS --> Orch : false
+deactivate RS
+Orch -> DS : detect()
+activate DS
+DS --> Orch : false
+deactivate DS
+note right of Orch : [No obstacle, No dust → proceed]
+Orch -> Motor : setDirection(FORWARD)
+Orch -> Cleaner : setMode(ON)
+deactivate Orch
+@enduml
+```
+
+### Diagram
+
+![SD-1 Perform Cleaning](./images/SD1_PerformCleaning.png)
+
+---
+
+## SD-2: Avoid Front Obstacle
+
+> **SSD-2 → SD-2**: `onFrontDetected()` 호출 시 청소 중단 → 열린 방향으로 회전 → 전진 → 청소 재개.  
+> UC-2 Pre-Req: 좌 또는 우 중 하나는 열려있음.
+
+### PlantUML Code
+
+```plantuml
+@startuml SD2_AvoidFrontObstacle
+title SD-2: Avoid Front Obstacle\n(based on SSD-2: onFrontDetected())
+
+actor ":FrontSensor\n(Interrupt)" as FS
+participant ":RVCOrchestrator" as Orch
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+participant ":MotorController" as Motor
+participant ":CleanerController" as Cleaner
+
+FS -> Orch : onFrontDetected()
+activate Orch
+Orch -> LS : detect()
+activate LS
+LS --> Orch : left
+deactivate LS
+Orch -> RS : detect()
+activate RS
+RS --> Orch : right
+deactivate RS
+note right of Orch : [Not (left && right) → avoidFrontObstacle(left)]
+Orch -> Cleaner : setMode(OFF)
+alt left == false
+  Orch -> Motor : setDirection(LEFT)
+else left == true
+  Orch -> Motor : setDirection(RIGHT)
+end
+Orch -> Motor : setDirection(FORWARD)
+Orch -> Cleaner : setMode(ON)
+deactivate Orch
+@enduml
+```
+
+### Diagram
+
+![SD-2 Avoid Front Obstacle](./images/SD2_AvoidFrontObstacle.png)
+
+---
+
+## SD-3: Avoid All Obstacles
+
+> **SSD-3 → SD-3**: `onFrontDetected()` 호출 후 `:System` 내부의 `checkLeftSensor()` / `checkRightSensor()` 자기 호출을  
+> `LeftSensor.detect()` / `RightSensor.detect()` 직접 호출로 구체화.  
+> UC-3 Pre-Req: Front/Left/Right Sensor 모두 True → 후진 후 방향 전환.
+
+### PlantUML Code
+
+```plantuml
+@startuml SD3_AvoidAllObstacles
+title SD-3: Avoid All Obstacles\n(based on SSD-3: onFrontDetected(), all blocked)
+
+actor ":FrontSensor\n(Interrupt)" as FS
+participant ":RVCOrchestrator" as Orch
+actor ":LeftSensor\n(Periodic)" as LS
+actor ":RightSensor\n(Periodic)" as RS
+participant ":MotorController" as Motor
+participant ":CleanerController" as Cleaner
+
+FS -> Orch : onFrontDetected()
+activate Orch
+Orch -> LS : detect()
+activate LS
+LS --> Orch : true
+deactivate LS
+Orch -> RS : detect()
+activate RS
+RS --> Orch : true
+deactivate RS
+note right of Orch : [left && right → avoidAllObstacles()]
+Orch -> Cleaner : setMode(OFF)
+Orch -> Motor : setDirection(BACKWARD)
+Orch -> LS : detect()
+activate LS
+LS --> Orch : leftBlocked
+deactivate LS
+alt leftBlocked == false
+  Orch -> Motor : setDirection(LEFT)
+else leftBlocked == true
+  Orch -> Motor : setDirection(RIGHT)
+end
+Orch -> Motor : setDirection(FORWARD)
+Orch -> Cleaner : setMode(ON)
+deactivate Orch
+@enduml
+```
+
+### Diagram
+
+![SD-3 Avoid All Obstacles](./images/SD3_AvoidAllObstacles.png)
+
+---
+
+## SD-4: Power Up Cleaning
+
+> **SSD-4 → SD-4**: `onTick()` 내부에서 DustSensor poll 결과가 true인 경우 파워업 처리.  
+> `onDustDetected()`는 private 내부 메서드로 호출됨.
+
+### PlantUML Code
+
+```plantuml
+@startuml SD4_PowerUpCleaning
+title SD-4: Power Up Cleaning\n(based on SSD-4: onTick(), dust detected)
+
+actor ":DigitalClock" as Clock
+participant ":RVCOrchestrator" as Orch
+actor ":FrontSensor" as FS
+actor ":LeftSensor" as LS
+actor ":RightSensor" as RS
+actor ":DustSensor" as DS
+participant ":MotorController" as Motor
+participant ":CleanerController" as Cleaner
+
+Clock -> Orch : onTick()
+activate Orch
+Orch -> FS : detect()
+activate FS
+FS --> Orch : front
+deactivate FS
+Orch -> LS : detect()
+activate LS
+LS --> Orch : left
+deactivate LS
+Orch -> RS : detect()
+activate RS
+RS --> Orch : right
+deactivate RS
+Orch -> DS : detect()
+activate DS
+DS --> Orch : dust
+deactivate DS
+Orch -> Motor : setDirection(FORWARD)
+alt dust == true
+  Orch -> Orch : onDustDetected()
+  activate Orch
+  Orch -> Cleaner : setMode(UP)
+  note right of Cleaner : 내부 타이머 시작 (5분)
+  loop update() = false
+    Orch -> Cleaner : update()
+    activate Cleaner
+    Cleaner --> Orch : false
+    deactivate Cleaner
+  end
+  Orch -> Cleaner : setMode(ON)
+  deactivate Orch
+else dust == false
+  Orch -> Cleaner : setMode(ON)
+end
+deactivate Orch
+@enduml
+```
+
+### Diagram
+
+![SD-4 Power Up Cleaning](./images/SD4_PowerUpCleaning.png)
+
+---
+
+## Traceability: SSD → SD
+
+| SSD (OOA)                              | SD (OOD) | `:System` 블랙박스 분해                                                                               |
+| -------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| SSD-1: `onTick()` no dust              | SD-1     | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, MotorController, CleanerController |
+| SSD-2: `onFrontDetected()`             | SD-2     | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController                          |
+| SSD-3: `onFrontDetected()` all blocked | SD-3     | RVCOrchestrator, LeftSensor, RightSensor, MotorController, CleanerController                          |
+| SSD-4: `onTick()` dust detected        | SD-4     | RVCOrchestrator, FrontSensor, LeftSensor, RightSensor, DustSensor, CleanerController                  |
