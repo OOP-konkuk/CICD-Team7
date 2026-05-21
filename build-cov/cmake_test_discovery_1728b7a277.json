@@ -1,0 +1,174 @@
+{
+  "tests": 30,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "CleanIntensityControllerTest",
+      "tests": 12,
+      "testsuite": [
+        {
+          "name": "ActivateStandardSetsStandardMode",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 17
+        },
+        {
+          "name": "ActivateBoostSetsBoostMode",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 24
+        },
+        {
+          "name": "BoostExpiresAfter5000ms",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 31
+        },
+        {
+          "name": "BoostDoesNotExpireBefore5000ms",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 39
+        },
+        {
+          "name": "SecondActivateBoostDoesNotRestartTimer",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 47
+        },
+        {
+          "name": "TickWithoutBoostIsNoOp",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 56
+        },
+        {
+          "name": "DeactivatePreservesBoostStateForResume",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 63
+        },
+        {
+          "name": "ResumeInStandardModeRestoresStandard",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 74
+        },
+        {
+          "name": "Boost_ExpiresAtExactBoundary_5000ms",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 82
+        },
+        {
+          "name": "Boost_AccumulatesAcrossMultipleTicks",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 90
+        },
+        {
+          "name": "ActivateStandard_AfterBoost_ClearsBoostFlag",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 100
+        },
+        {
+          "name": "Deactivate_InStandardMode_NoBoostFlag",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_clean_intensity_controller.cpp",
+          "line": 109
+        }
+      ]
+    },
+    {
+      "name": "CleaningEngineTest",
+      "tests": 9,
+      "testsuite": [
+        {
+          "name": "StartupStartsForwardAndStandardCleaning",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 27
+        },
+        {
+          "name": "PowerOffHaltsAllDevices",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 38
+        },
+        {
+          "name": "ExceptionCausesSafeHalt",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 50
+        },
+        {
+          "name": "FrontObstacleTriggersAvoidance",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 72
+        },
+        {
+          "name": "ObstaclePriorityOverDust",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 89
+        },
+        {
+          "name": "DustActivatesBoostMode",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 107
+        },
+        {
+          "name": "DustIgnoredDuringBoostMode",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 123
+        },
+        {
+          "name": "ObstacleHandledDuringBoostMode_BoostResumesAfter",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 146
+        },
+        {
+          "name": "Startup_LogsReadyMessage",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_cleaning_engine.cpp",
+          "line": 180
+        }
+      ]
+    },
+    {
+      "name": "ObstacleHandlerTest",
+      "tests": 9,
+      "testsuite": [
+        {
+          "name": "StartForwardEmitsForwardCommand",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 16
+        },
+        {
+          "name": "TurnLeftWhenLeftIsClear",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 22
+        },
+        {
+          "name": "TurnRightWhenLeftBlockedRightClear",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 34
+        },
+        {
+          "name": "BackwardThenTurnWhenAllBlocked",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 46
+        },
+        {
+          "name": "BackwardThenLeftTurnIfLeftClearsAfterReverse",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 59
+        },
+        {
+          "name": "NoSensorPollingDuringRotation",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 72
+        },
+        {
+          "name": "CommandOrder_LeftTurn_TurnBeforeStopBeforeForward",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 90
+        },
+        {
+          "name": "CommandOrder_BackPath_BackwardBeforeTurnBeforeForward",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 104
+        },
+        {
+          "name": "StartForward_EmitsExactlyOneForward",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/unit\/test_obstacle_handler.cpp",
+          "line": 124
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+if(EXISTS "/mnt/c/Users/윤성진/OneDrive/바탕 화면/Konkuk/3-1/객체지향개발방법론/과제/TeamPractice#5/dev/#5_Team7/build-cov/oop_system_test[1]_tests.cmake")
+  include("/mnt/c/Users/윤성진/OneDrive/바탕 화면/Konkuk/3-1/객체지향개발방법론/과제/TeamPractice#5/dev/#5_Team7/build-cov/oop_system_test[1]_tests.cmake")
+else()
+  add_test(oop_system_test_NOT_BUILT oop_system_test_NOT_BUILT)
+endif()

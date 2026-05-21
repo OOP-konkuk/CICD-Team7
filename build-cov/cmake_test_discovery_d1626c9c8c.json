@@ -1,0 +1,47 @@
+{
+  "tests": 7,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "SystemScenario",
+      "tests": 7,
+      "testsuite": [
+        {
+          "name": "NormalStartupAndShutdown",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/system\/test_system_scenarios.cpp",
+          "line": 25
+        },
+        {
+          "name": "ObstacleAvoidanceLeftPath",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/system\/test_system_scenarios.cpp",
+          "line": 38
+        },
+        {
+          "name": "ObstacleAvoidanceRightPath",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/system\/test_system_scenarios.cpp",
+          "line": 52
+        },
+        {
+          "name": "ObstacleAvoidanceBackPath",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/system\/test_system_scenarios.cpp",
+          "line": 66
+        },
+        {
+          "name": "BoostActivatedByDust",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/system\/test_system_scenarios.cpp",
+          "line": 81
+        },
+        {
+          "name": "BoostResumesAfterObstacleAvoidance",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/system\/test_system_scenarios.cpp",
+          "line": 94
+        },
+        {
+          "name": "InternalErrorCausesSafeHalt",
+          "file": "\/mnt\/c\/Users\/\u00EC\u009C\u00A4\u00EC\u0084\u00B1\u00EC\u00A7\u0084\/OneDrive\/\u00EB\u00B0\u0094\u00ED\u0083\u0095 \u00ED\u0099\u0094\u00EB\u00A9\u00B4\/Konkuk\/3-1\/\u00EA\u00B0\u009D\u00EC\u00B2\u00B4\u00EC\u00A7\u0080\u00ED\u0096\u00A5\u00EA\u00B0\u009C\u00EB\u00B0\u009C\u00EB\u00B0\u00A9\u00EB\u00B2\u0095\u00EB\u00A1\u00A0\/\u00EA\u00B3\u00BC\u00EC\u00A0\u009C\/TeamPractice#5\/dev\/#5_Team7\/test\/system\/test_system_scenarios.cpp",
+          "line": 129
+        }
+      ]
+    }
+  ]
+}
