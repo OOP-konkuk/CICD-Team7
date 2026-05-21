@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\윤성진\\\\OneDrive\\\\바탕 화면\\\\Konkuk\\\\3-1\\\\객체지향개발방법론\\\\과제\\\\TeamPractice#5\\\\dev\\\\reference\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\윤성진\\\\OneDrive\\\\바탕 화면\\\\Konkuk\\\\3-1\\\\객체지향개발방법론\\\\과제\\\\TeamPractice#5\\\\dev\\\\reference\\\\CICD-Team7-main\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(wsl bash *)"
+    ]
+  }
+}
