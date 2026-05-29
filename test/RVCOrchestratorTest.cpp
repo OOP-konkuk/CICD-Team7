@@ -19,7 +19,6 @@ protected:
     StubCleaner stubCleaner;
     StubSensor* frontSensor;
     StubSensor* leftSensor;
-    StubSensor* rightSensor;
 
     MotorController motorCtrl{&stubMotor};
     CleanerController cleanerCtrl{&stubCleaner};
@@ -39,12 +38,10 @@ protected:
 
         auto f = std::make_unique<StubSensor>();
         auto l = std::make_unique<StubSensor>();
-        auto r = std::make_unique<StubSensor>();
         frontSensor = f.get();
         leftSensor  = l.get();
-        rightSensor = r.get();
         movCtrl = std::make_unique<MovementPolicyController>(
-            std::move(f), std::move(l), std::move(r));
+            std::move(f), std::move(l));
 
         orchestrator = std::make_unique<RVCOrchestrator>(
             cliHandler,
@@ -137,19 +134,19 @@ TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_LeftFree_StopsAndTurnsLeft) {
     EXPECT_TRUE(stubMotor.turnLeftCalled);
 }
 
-// [Negative] 왼쪽 막힘·오른쪽 비어 있을 때 turnRight가 호출되고 turnLeft는 호출되지 않는지 확인
+// [Negative] 좌측 막힘 → 180도 회전 후 좌측 비어 있을 때 turnRight가 호출되고 turnLeft는 호출되지 않는지 확인
 TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_LeftBlocked_TurnsRightNotLeft) {
-    leftSensor->detectedValue  = true;
-    rightSensor->detectedValue = false;
+    // 첫 번째 좌측 감지: 막힘, 180도 회전 후 두 번째 좌측 감지: 비어있음
+    leftSensor->responseQueue = {true, false};
     orchestrator->detectObstacle();
     EXPECT_TRUE(stubMotor.turnRightCalled);
     EXPECT_FALSE(stubMotor.turnLeftCalled);
 }
 
-// [Negative] 양쪽 모두 막혔을 때 backward가 호출되고 turn은 호출되지 않는지 확인
+// [Negative] 좌측이 180도 회전 후에도 막혔을 때 backward가 호출되고 turn은 호출되지 않는지 확인
 TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_BothBlocked_BackwardOnlyNoTurn) {
-    leftSensor->detectedValue  = true;
-    rightSensor->detectedValue = true;
+    // 첫 번째, 두 번째 좌측 감지 모두 막힘
+    leftSensor->detectedValue = true;
     orchestrator->detectObstacle();
     EXPECT_TRUE(stubMotor.moveBackwardCalled);
     EXPECT_FALSE(stubMotor.turnLeftCalled);
@@ -234,19 +231,18 @@ TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_LeftFree_BackwardThenTurnLeft) {
     EXPECT_EQ(stubMotor.callCount, 2);
 }
 
-// [Negative] 왼쪽 막힘·오른쪽 비어 있을 때 backward·turnRight가 호출되는지 확인
+// [Negative] 좌측 막힘 → 180도 회전 후 좌측 비어 있을 때 backward·turnRight가 호출되는지 확인
 TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_LeftBlocked_CallsBackwardThenTurnRight) {
-    leftSensor->detectedValue  = true;
-    rightSensor->detectedValue = false;
+    // backward 후 첫 번째 좌측 감지: 막힘, 180도 회전 후 두 번째 좌측 감지: 비어있음
+    leftSensor->responseQueue = {true, false};
     orchestrator->backwardAndTurn();
     EXPECT_TRUE(stubMotor.moveBackwardCalled);
     EXPECT_TRUE(stubMotor.turnRightCalled);
 }
 
-// [Negative] 양쪽 모두 막혔을 때 backward만 호출되고 turn은 호출되지 않는지 확인 (fail-safe)
+// [Negative] 180도 회전 후에도 모두 막혔을 때 backward만 호출되고 turn은 호출되지 않는지 확인 (fail-safe)
 TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_BothBlocked_OnlyBackwardCalled) {
-    leftSensor->detectedValue  = true;
-    rightSensor->detectedValue = true;
+    leftSensor->detectedValue = true;
     orchestrator->backwardAndTurn();
     EXPECT_TRUE(stubMotor.moveBackwardCalled);
     EXPECT_FALSE(stubMotor.turnLeftCalled);

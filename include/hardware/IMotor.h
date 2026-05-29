@@ -9,4 +9,5 @@ public:
     virtual void turnLeft() = 0;
     virtual void turnRight() = 0;
     virtual void stopMoving() = 0;
+    virtual void rotate() = 0;
 };

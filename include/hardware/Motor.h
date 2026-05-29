@@ -10,4 +10,5 @@ public:
     void turnLeft() override;
     void turnRight() override;
     void stopMoving() override;
+    void rotate() override;
 };

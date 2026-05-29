@@ -16,4 +16,5 @@ public:
     void initialize();
     void requestStopMoving();
     void move(DirectionType direction);
+    void requestRotate();
 };
