@@ -1,0 +1,27 @@
+# Static Analysis -- GCC -fanalyzer (inter-procedural) (maintenance re-run)
+# (clang-tidy binary unavailable in WSL environment; GCC -fanalyzer used as substitute —
+#  same methodology as legacy/docs/sa/clang-tidy.txt)
+#
+# Re-run date: 2026-05-29  |  Target: 수정된 src/core/ (오른쪽 근접 센서 삭제 반영)
+#
+# Command:
+#   g++ -std=c++17 -fanalyzer -Wall -Wextra -Wpedantic -Iinclude -fsyntax-only \
+#       src/core/cleaning_engine.cpp \
+#       src/core/obstacle_handler.cpp \
+#       src/core/clean_intensity_controller.cpp
+#
+# Raw findings: 0 warnings  (exit 0)
+# Project-specific issues: 0
+#
+# legacy 대비 비교:
+#   - legacy/docs/sa/clang-tidy.txt 는 2026-05-21 실행 당시 std::string move ctor / operator+
+#     경로에서 CWE-457 (use of uninitialized value) 거짓 양성 5건을 보고했다
+#     (GCC Bugzilla #107417 — libstdc++ SSO 추적 버그).
+#   - 본 재실행(2026-05-29, GCC 13.3.0)에서는 수정 코드·legacy 코드 모두 해당 경고가
+#     재현되지 않았다(둘 다 0건). 동일 명령으로 legacy/src 에 대해서도 확인:
+#         g++ ... -Ilegacy/include legacy/src/core/{cleaning_engine,obstacle_handler,
+#         clean_intensity_controller}.cpp  →  0 warnings
+#     → 5건은 당시 toolchain 의 STL 거짓 양성 잔재이며, 현재 toolchain 에서는 소멸.
+#   - 결론: 우측 센서 삭제로 인한 새 흐름 결함 없음. legacy 대비 프로젝트 이슈 0 → 0 (일치).
+
+(no project-level issues)

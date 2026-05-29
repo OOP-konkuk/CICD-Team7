@@ -1,0 +1,22 @@
+# Static Analysis -- GCC -fanalyzer (inter-procedural)
+# (clang-tidy binary unavailable in WSL environment at analysis time; GCC -fanalyzer used)
+#
+# Command:
+#   g++ -std=c++17 -fanalyzer -Wall -Wextra -Wpedantic -Iinclude -c \
+#       src/core/cleaning_engine.cpp \
+#       src/core/obstacle_handler.cpp \
+#       src/core/clean_intensity_controller.cpp
+#
+# Raw findings: 5 warnings (all inside std::string move constructor / operator+)
+# Determination: FALSE POSITIVES -- GCC -fanalyzer known issue with SSO (small-string
+#                optimisation) in libstdc++ basic_string move ctor.
+#                See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107417
+#
+# Project-specific issues: 0
+#
+# Events listed below are call-chain context for the STL false positive -- not project bugs:
+#   'void CleaningEngine::run()': events 1-2  (entry -> initSequence call)
+#   'void CleaningEngine::run()': events 20-21 (catch branch -> log_.write call)
+#   'void CleaningEngine::run()': events 38-39 (second catch -> log_.write call)
+
+(no project-level issues)

@@ -1,0 +1,23 @@
+# Static Analysis — GCC Compiler Diagnostics
+# (cppcheck binary unavailable in WSL environment at analysis time; GCC used as substitute)
+#
+# Command:
+#   g++ -std=c++17 -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
+#       -Iinclude -c \
+#       src/core/cleaning_engine.cpp \
+#       src/core/obstacle_handler.cpp \
+#       src/core/clean_intensity_controller.cpp \
+#       src/app/console_log.cpp \
+#       src/app/cli_command_source.cpp \
+#       src/app/main.cpp
+#
+# Result: 0 warnings, 0 errors
+#
+# Flags covered:
+#   -Wall        : common correctness warnings
+#   -Wextra      : additional pedantic warnings (unused params, missing braces, etc.)
+#   -Wpedantic   : ISO C++ conformance
+#   -Wconversion : implicit narrowing conversions (int -> smaller type, signed/unsigned)
+#   -Wshadow     : local variable shadowing outer scope
+
+(no output -- clean)

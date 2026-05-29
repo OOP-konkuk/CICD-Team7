@@ -1,0 +1,82 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake lcov unzip wget
+          pip install gcovr==6.0
+
+      - name: Extract build-wrapper
+        run: unzip tools/build-wrapper-linux-x86.zip
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="--coverage" \
+            -DCMAKE_C_FLAGS="--coverage"
+
+      - name: Build with build-wrapper
+        run: |
+          ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output \
+            cmake --build build
+
+      - name: Run Tests
+        run: cd build && ctest --output-on-failure
+
+      - name: Generate coverage report
+        run: |
+          gcovr -r . \
+            --sonarqube \
+            --object-directory build \
+            --exclude ".*CMakeFiles.*" \
+            --exclude-unreachable-branches \
+            --gcov-ignore-errors=no_working_dir_found \
+            -o coverage.xml
+
+      - name: Run SonarScanner
+        run: |
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip sonar-scanner-cli-5.0.1.3006-linux.zip
+          ./sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.projectKey=OOP-konkuk_CICD-Team7 \
+            -Dsonar.organization=oop-konkuk \
+            -Dsonar.sources=src \
+            -Dsonar.cfamily.compile-commands=bw-output/compile_commands.json \
+            -Dsonar.coverageReportPaths=coverage.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Discord 성공 알림
+        if: success()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: '✅ SonarCloud 분석 완료: `${{ github.repository }}` - ${{ github.ref_name }}'
+
+      - name: Discord 실패 알림
+        if: failure()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: '❌ SonarCloud 분석 실패: `${{ github.repository }}` - ${{ github.ref_name }}'
