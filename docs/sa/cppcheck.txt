@@ -1,0 +1,30 @@
+# Static Analysis — GCC Compiler Diagnostics (maintenance re-run)
+# (cppcheck binary unavailable in WSL environment; GCC used as substitute — same
+#  methodology as legacy/docs/sa/cppcheck.txt so the legacy↔수정 비교가 apples-to-apples)
+#
+# Re-run date: 2026-05-29  |  Target: 수정된 src/ + include/ (오른쪽 근접 센서 삭제 반영)
+#
+# Command:
+#   g++ -std=c++17 -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
+#       -Iinclude -fsyntax-only \
+#       src/core/cleaning_engine.cpp \
+#       src/core/obstacle_handler.cpp \
+#       src/core/clean_intensity_controller.cpp \
+#       src/app/console_log.cpp \
+#       src/app/cli_command_source.cpp \
+#       src/app/main.cpp
+#
+# Result: 0 warnings, 0 errors  (exit 0)
+#
+# Flags covered:
+#   -Wall        : common correctness warnings
+#   -Wextra      : additional pedantic warnings (unused params, missing braces, etc.)
+#   -Wpedantic   : ISO C++ conformance
+#   -Wconversion : implicit narrowing conversions (int -> smaller type, signed/unsigned)
+#   -Wshadow     : local variable shadowing outer scope
+#
+# legacy 대비: 일치 (legacy 0 → 수정 0). 우측 센서 삭제는 새 경고를 만들지 않음.
+#   특히 obstacle_handler.cpp 의 selectPath()/ctor 에서 right_ 멤버·인자가 제거됐으나
+#   미사용 멤버·미사용 매개변수 경고는 발생하지 않음(완전 제거되어 잔여 없음).
+
+(no output -- clean)
