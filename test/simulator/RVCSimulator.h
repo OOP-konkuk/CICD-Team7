@@ -2,6 +2,7 @@
 #include <memory>
 #include <sstream>
 #include <iostream>
+#include <vector>
 #include "hardware/IMotor.h"
 #include "hardware/ICleaner.h"
 #include "hardware/Sensor.h"
@@ -16,12 +17,14 @@ public:
     enum class State { STOPPED, FORWARD, BACKWARD, TURN_LEFT, TURN_RIGHT };
     State state = State::STOPPED;
     int moveCount = 0;
+    bool rotateCalled = false;
 
     void moveForward()  override { state = State::FORWARD;    ++moveCount; }
     void moveBackward() override { state = State::BACKWARD;   ++moveCount; }
     void turnLeft()     override { state = State::TURN_LEFT;  ++moveCount; }
     void turnRight()    override { state = State::TURN_RIGHT; ++moveCount; }
     void stopMoving()   override { state = State::STOPPED;    ++moveCount; }
+    void rotate()       override { rotateCalled = true;       ++moveCount; }
 
     bool isStopped()        const { return state == State::STOPPED;    }
     bool isMovingForward()  const { return state == State::FORWARD;    }
@@ -30,7 +33,7 @@ public:
     bool isTurningRight()   const { return state == State::TURN_RIGHT; }
     bool isMoving()         const { return state != State::STOPPED;    }
 
-    void reset() { state = State::STOPPED; moveCount = 0; }
+    void reset() { state = State::STOPPED; moveCount = 0; rotateCalled = false; }
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -61,8 +64,29 @@ public:
 // ──────────────────────────────────────────────────────────────────────────────
 class SimSensor : public Sensor {
 public:
-    void setObstacle(bool detected) { isDetected = detected; }
-    bool requestStatus() override { return isDetected; }
+    bool detectedValue = false;
+    std::vector<bool> responseQueue;
+    int callCount = 0;
+
+    void setObstacle(bool detected) { detectedValue = detected; }
+
+    bool requestStatus() override {
+        bool result;
+        if (!responseQueue.empty() && callCount < (int)responseQueue.size())
+            result = responseQueue[callCount];
+        else
+            result = detectedValue;
+        ++callCount;
+        isDetected = result;
+        return result;
+    }
+
+    void reset() {
+        detectedValue = false;
+        responseQueue.clear();
+        callCount = 0;
+        isDetected = false;
+    }
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -86,7 +110,6 @@ public:
     SimCleaner cleaner;
     SimSensor* front{};
     SimSensor* left{};
-    SimSensor* right{};
 
     CLIHandler               cliHandler;
     MotorController          motorCtrl;
@@ -99,10 +122,9 @@ public:
     RVCSystemSimulator() : motorCtrl(&motor), cleanerCtrl(&cleaner) {
         auto f = std::make_unique<SimSensor>();
         auto l = std::make_unique<SimSensor>();
-        auto r = std::make_unique<SimSensor>();
-        front = f.get(); left = l.get(); right = r.get();
+        front = f.get(); left = l.get();
         movCtrl = std::make_unique<MovementPolicyController>(
-            std::move(f), std::move(l), std::move(r));
+            std::move(f), std::move(l));
         orc = std::make_unique<RVCOrchestrator>(
             cliHandler, &powerCtrl, &motorCtrl,
             &cleanerCtrl, movCtrl.get(), &cleaningPolicyCtrl);
@@ -116,8 +138,14 @@ public:
 
     // ── Environment: 센서 상태 주입 (장애물/먼지 상황 시뮬레이션) ─────────
     void setFrontObstacle(bool detected) { front->setObstacle(detected); }
-    void setLeftObstacle (bool detected) { left->setObstacle(detected);  }
-    void setRightObstacle(bool detected) { right->setObstacle(detected); }
+    void setLeftObstacle (bool detected) {
+        left->setObstacle(detected);
+        left->responseQueue.clear();
+    }
+    // 우측 방향은 180도 회전 후 좌측 센서로 감지: 두 번째 감지값으로 설정
+    void setRightObstacle(bool detected) {
+        left->responseQueue = {left->detectedValue, detected};
+    }
 
     // ── System State Queries ─────────────────────────────────────────────
     SimMotor::State  motorState()  const { return motor.state;   }

@@ -28,3 +28,8 @@ void MotorController::move(DirectionType direction) {
     }
     isRotating = (direction == DirectionType::LEFT || direction == DirectionType::RIGHT);
 }
+
+void MotorController::requestRotate() {
+    motorPtr->rotate();
+    isRotating = true;
+}

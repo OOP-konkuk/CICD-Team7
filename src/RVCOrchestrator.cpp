@@ -49,10 +49,17 @@ void RVCOrchestrator::performCleaning() {
 void RVCOrchestrator::detectObstacle() {
     cleanerPtr->requestStopCleaning();
     motorPtr->requestStopMoving();
+
     DirectionType dir = movementPtr->checkMovementPolicy();
-    if (dir == DirectionType::LEFT)     { turnLeft();        return; }
-    if (dir == DirectionType::RIGHT)    { turnRight();       return; }
-    if (dir == DirectionType::BACKWARD) { backwardAndTurn(); return; }
+    if (dir == DirectionType::LEFT) { turnLeft(); return; }
+
+    // 좌측 막힘: 180도 회전 후 좌측 센서로 원래 우측 방향 확인, 이후 복귀
+    motorPtr->requestRotate();
+    DirectionType dir2 = movementPtr->checkMovementPolicy();
+    motorPtr->requestRotate();
+
+    if (dir2 == DirectionType::LEFT) { turnRight(); return; }
+    backwardAndTurn();
 }
 
 // UC4: Turn Left
@@ -68,10 +75,17 @@ void RVCOrchestrator::turnRight() {
 // UC6: Backward & Turn
 void RVCOrchestrator::backwardAndTurn() {
     motorPtr->move(DirectionType::BACKWARD);
+
     DirectionType dir = movementPtr->checkMovementPolicy();
-    if (dir == DirectionType::LEFT)  { turnLeft();  return; }
-    if (dir == DirectionType::RIGHT) { turnRight(); return; }
-    // all blocked → remain stopped (fail-safe)
+    if (dir == DirectionType::LEFT) { turnLeft(); return; }
+
+    // 좌측 막힘: 180도 회전 후 좌측 센서로 원래 우측 방향 확인, 이후 복귀
+    motorPtr->requestRotate();
+    DirectionType dir2 = movementPtr->checkMovementPolicy();
+    motorPtr->requestRotate();
+
+    if (dir2 == DirectionType::LEFT) { turnRight(); return; }
+    // all blocked → remain backward (fail-safe)
 }
 
 //UC7: perform boost cleaning

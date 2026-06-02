@@ -9,3 +9,5 @@ void Motor::turnLeft() {}
 void Motor::turnRight() {}
 
 void Motor::stopMoving() {}
+
+void Motor::rotate() {}
