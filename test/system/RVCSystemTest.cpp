@@ -160,7 +160,7 @@ STEST_REGISTER(Flow2_CleaningSession, Cleaning_DoesNotOutputError, []() {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  Flow 3 — Obstacle Avoidance (12 cases)
+//  Flow 3 — Obstacle Avoidance (14 cases)
 //  UC3 장애물 감지 시 센서 환경에 따라 모터가 올바른 상태로 전환되는지 검증한다.
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -270,8 +270,26 @@ STEST_REGISTER(Flow3_ObstacleAvoidance, Obstacle_CleanerDoesNotEnterBoost, []() 
     STEST_EXPECT_FALSE(sim.cleaner.isBoost());
 });
 
+// [Negative] 좌측 막힘·우측 자유 환경에서 장애물 감지 시 우측 확인을 위한 180도 회전이 실제로 호출되는지 확인
+STEST_REGISTER(Flow3_ObstacleAvoidance, EnvRightFree_RotateIsCalledForRightCheck, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(false);
+    sim.orc->detectObstacle();
+    STEST_EXPECT_TRUE(sim.motor.rotateCalled);
+});
+
+// [Negative] 양방향 막힘 환경에서 장애물 감지 시에도 우측 확인을 위한 180도 회전이 호출되는지 확인
+STEST_REGISTER(Flow3_ObstacleAvoidance, EnvBothBlocked_RotateIsCalledForRightCheck, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(true);
+    sim.orc->detectObstacle();
+    STEST_EXPECT_TRUE(sim.motor.rotateCalled);
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
-//  Flow 4 — Backward And Turn (9 cases)
+//  Flow 4 — Backward And Turn (11 cases)
 //  UC6 후진+회전 시나리오에서 모터 최종 상태와 청소기 무영향을 검증한다.
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -349,6 +367,24 @@ STEST_REGISTER(Flow4_BackwardAndTurn, BackwardAndTurn_CleanerDoesNotStartCleanin
     RVCSystemSimulator sim;
     sim.orc->backwardAndTurn();
     STEST_EXPECT_FALSE(sim.cleaner.isCleaning());
+});
+
+// [Negative] 좌측 막힘·우측 자유 환경에서 후진 후 우측 확인을 위한 180도 회전이 실제로 호출되는지 확인
+STEST_REGISTER(Flow4_BackwardAndTurn, EnvRightFree_RotateIsCalledForRightCheck, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(false);
+    sim.orc->backwardAndTurn();
+    STEST_EXPECT_TRUE(sim.motor.rotateCalled);
+});
+
+// [Negative] 양방향 막힘 환경에서 후진 후에도 우측 확인을 위한 180도 회전이 호출되는지 확인
+STEST_REGISTER(Flow4_BackwardAndTurn, EnvBothBlocked_RotateIsCalledForRightCheck, []() {
+    RVCSystemSimulator sim;
+    sim.setLeftObstacle(true);
+    sim.setRightObstacle(true);
+    sim.orc->backwardAndTurn();
+    STEST_EXPECT_TRUE(sim.motor.rotateCalled);
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -479,6 +515,20 @@ STEST_REGISTER(Flow6_ErrorHandling, Error_OutputDoesNotContainRVCPrefix, []() {
     RVCSystemSimulator sim;
     sim.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
     STEST_EXPECT_NOT_CONTAINS(sim.displayOutput(), "[RVC]");
+});
+
+// [Positive] 오류 발생 시 출력 메시지에 에러 타입 문자열이 포함된다
+STEST_REGISTER(Flow6_ErrorHandling, Error_OutputContainsErrorType, []() {
+    RVCSystemSimulator sim;
+    sim.orc->notifyError(ErrorInfo(ErrorType::MOTOR_ERROR));
+    STEST_EXPECT_CONTAINS(sim.displayOutput(), "MOTOR_ERROR");
+});
+
+// [Negative] 오류 발생 후 모터는 BACKWARD 상태가 되지 않는다
+STEST_REGISTER(Flow6_ErrorHandling, Error_MotorDoesNotMoveBackward, []() {
+    RVCSystemSimulator sim;
+    sim.orc->notifyError(ErrorInfo(ErrorType::SENSOR_ERROR));
+    STEST_EXPECT_FALSE(sim.motor.isMovingBackward());
 });
 
 // ══════════════════════════════════════════════════════════════════════════════

@@ -85,7 +85,7 @@ void RVCOrchestrator::backwardAndTurn() {
     motorPtr->requestRotate();
 
     if (dir2 == DirectionType::LEFT) { turnRight(); return; }
-    // all blocked → remain stopped (fail-safe)
+    // all blocked → remain backward (fail-safe)
 }
 
 //UC7: perform boost cleaning

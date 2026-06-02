@@ -143,6 +143,14 @@ TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_LeftBlocked_TurnsRightNotLeft) {
     EXPECT_FALSE(stubMotor.turnLeftCalled);
 }
 
+// [Negative] 좌측 막힘 → 180도 회전(requestRotate)이 실제로 호출되는지 확인
+TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_LeftBlocked_RotateIsCalled) {
+    // 첫 번째 좌측 감지: 막힘, 180도 회전 후 두 번째 좌측 감지: 비어있음
+    leftSensor->responseQueue = {true, false};
+    orchestrator->detectObstacle();
+    EXPECT_TRUE(stubMotor.rotateCalled);
+}
+
 // [Negative] 좌측이 180도 회전 후에도 막혔을 때 backward가 호출되고 turn은 호출되지 않는지 확인
 TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_BothBlocked_BackwardOnlyNoTurn) {
     // 첫 번째, 두 번째 좌측 감지 모두 막힘
@@ -151,6 +159,13 @@ TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_BothBlocked_BackwardOnlyNoTurn) {
     EXPECT_TRUE(stubMotor.moveBackwardCalled);
     EXPECT_FALSE(stubMotor.turnLeftCalled);
     EXPECT_FALSE(stubMotor.turnRightCalled);
+}
+
+// [Negative] 양방향 막힘 시에도 우측 확인을 위한 180도 회전(requestRotate)이 호출되는지 확인
+TEST_F(RVCOrchestratorTest, UC3_DetectObstacle_BothBlocked_RotateIsCalled) {
+    leftSensor->detectedValue = true;
+    orchestrator->detectObstacle();
+    EXPECT_TRUE(stubMotor.rotateCalled);
 }
 
 // [Negative] detectObstacle() 호출 시 display 출력이 없는지 확인
@@ -240,6 +255,15 @@ TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_LeftBlocked_CallsBackwardThenTur
     EXPECT_TRUE(stubMotor.turnRightCalled);
 }
 
+// [Negative] 좌측 막힘 → 우측 확인을 위한 180도 회전(requestRotate)이 호출되고 callCount가 4인지 확인
+// backward(1) + rotate(2) + rotate(3) + turnRight(4)
+TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_LeftBlocked_RotateIsCalledAndCountIs4) {
+    leftSensor->responseQueue = {true, false};
+    orchestrator->backwardAndTurn();
+    EXPECT_TRUE(stubMotor.rotateCalled);
+    EXPECT_EQ(stubMotor.callCount, 4);
+}
+
 // [Negative] 180도 회전 후에도 모두 막혔을 때 backward만 호출되고 turn은 호출되지 않는지 확인 (fail-safe)
 TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_BothBlocked_OnlyBackwardCalled) {
     leftSensor->detectedValue = true;
@@ -247,6 +271,13 @@ TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_BothBlocked_OnlyBackwardCalled) 
     EXPECT_TRUE(stubMotor.moveBackwardCalled);
     EXPECT_FALSE(stubMotor.turnLeftCalled);
     EXPECT_FALSE(stubMotor.turnRightCalled);
+}
+
+// [Negative] 양방향 막힘 시에도 우측 확인을 위한 180도 회전(requestRotate)이 호출되는지 확인
+TEST_F(RVCOrchestratorTest, UC6_BackwardAndTurn_BothBlocked_RotateIsCalled) {
+    leftSensor->detectedValue = true;
+    orchestrator->backwardAndTurn();
+    EXPECT_TRUE(stubMotor.rotateCalled);
 }
 
 // [Negative] backwardAndTurn() 호출 시 cleaner가 호출되지 않는지 확인
